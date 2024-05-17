@@ -10,7 +10,7 @@ create table Customer (
     Identitynumber varchar2(12),
     GenderId number(3),
     DefaultPhoneId number(20),
-    EmailId number(20) not null unique,
+    EmailId number(20) unique not null,
     DefaultDeliveryAddressId number(20),
     IsAccountActive number(1) not null    
 );
@@ -19,7 +19,7 @@ create table Customer (
 -- CustomerSession
 create table CustomerSession (
     CustomerSessionId number(20) primary key,
-    CustomerId number(20) unique,
+    CustomerId number(20) unique not null,
     IsLogin number(1) not null    
 );
 
@@ -27,21 +27,21 @@ create table CustomerSession (
 -- IdentityType
 create table IdentityType (
     IdentityTypeId number(3) primary key,
-    TypeName varchar2(50) unique
+    TypeName varchar2(50) unique not null
 );
 
 
--- GenderType
-create table GenderType (
-    GenderTypeId number(3) primary key,
-    TypeName varchar2(50) unique
+-- Gender
+create table Gender (
+    GenderId number(3) primary key,
+    GenderName varchar2(50) unique not null
 );
 
 
 -- Email
 create table Email (
     EmailId number(20) primary key,
-    EmailAddress varchar2(255) unique
+    EmailAddress varchar2(255) unique not null
 );
 
 
@@ -49,7 +49,7 @@ create table Email (
 -- Uluslararasý telefon numarasýnýn tamamý için maksimum 15 haneli bir uzunluða izin verilir.
 create table Phone (
     PhoneId number(20) primary key,
-    PhoneNumber varchar2(20) unique
+    PhoneNumber varchar2(20) unique not null
 );
 
 
@@ -57,7 +57,7 @@ create table Phone (
 -- Dünya üzerinde 195 ülke var
 create table Country (
     CountryId number(4) primary key,
-    CountryName varchar2(100) unique
+    CountryName varchar2(100) unique not null
 );
 
 
@@ -145,7 +145,7 @@ create table CustomerProductFavorite (
 -- Basket
 create table Basket (
     BasketId number(20) primary key,
-    CustomerId number(20) unique
+    CustomerId number(20) unique not null
 );
 
 -- BasketProduct
@@ -160,22 +160,22 @@ create table BasketProduct (
 -- OrderStatusType
 create table OrderStatusType (
     OrderStatusTypeId number(2) primary key,
-    TypeName varchar2(50) unique
+    TypeName varchar2(50) unique not null
 );
 
 -- Tax
 create table Tax (
     TaxId number(3) primary key,
-    TaxName varchar2(100) not null,
+    TaxName varchar2(100) unique not null,
     TaxPercentage number(5) not null
 );
 
 
--- CustomerOrderOrder
+-- CustomerOrder
 create table CustomerOrder (
     CustomerOrderId number(23) primary key,
     CustomerId number(20) not null,
-    OrderNo varchar2(30) unique,
+    OrderNo varchar2(30) unique not null,
     OrderDate date not null,
     TotalPrice number(12,2) not null,
     OrderStatusTypeId number(2) not null,
@@ -183,19 +183,16 @@ create table CustomerOrder (
 );
 
 
--- OrderDetail
-create table OrderDetail (
-    OrderDetailId number(25) primary key,
+-- CustomerOrderDetail
+create table CustomerOrderDetail (
+    CustomerOrderDetailId number(25) primary key,
     CustomerOrderId number(23) not null,
     ProductId number(20) not null,
     Quantity number(10) not null,
     UnitPrice number(11,2) not null
 );
 
-
-
-
-
+commit;
 
 
 
