@@ -1,4 +1,4 @@
-create or replace package emailManager_pkg is
+create or replace noneditionable package emailManager_pkg is
 
   v_emailId email.emailid%type;
 
@@ -7,7 +7,7 @@ create or replace package emailManager_pkg is
 
 end emailManager_pkg;
 /
-create or replace package body emailManager_pkg is
+create or replace noneditionable package body emailManager_pkg is
 
   function addEmail(p_emailAddress email.emailaddress%type)
     return email.emailid%type is
