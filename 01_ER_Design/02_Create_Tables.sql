@@ -5,7 +5,7 @@ create table Customer (
     LastName varchar2(100) not null,
     BirthDate date,
     PasswordHash varchar2(255) not null,
-    PasswordSalt varchar2(255) not null,
+    PasswordSalt varchar2(255) unique not null,
     IdentityTypeId number(3),
     Identitynumber varchar2(12),
     GenderId number(3),
