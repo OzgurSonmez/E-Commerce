@@ -21,3 +21,6 @@ grant resource to  ECommerceProject;
 -- Grant/Revoke system privileges 
 -- Kullanýcýnýn sýnýrsýz bir þekilde tablespace kullanabilmesine izin verir
 grant unlimited tablespace to  ECommerceProject;
+
+-- DBMS_CRYPTO paketini kullanma izni
+grant execute on DBMS_CRYPTO to ECommerceProject;
