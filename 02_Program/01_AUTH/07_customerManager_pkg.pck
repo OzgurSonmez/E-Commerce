@@ -41,6 +41,17 @@ create or replace noneditionable package body customerManager_pkg is
        v_passwordSalt,
        p_emailId,
        1);
+       
+       commit; 
+       
+       exception   
+         when value_error then
+           rollback;
+           raise_application_error(-20101, 'Geçersiz veri hatası.');       
+         when others then
+           rollback;
+           raise_application_error(-20105, 'Beklenmeyen bir hata oluştu. Hata kodu: ' || sqlerrm);
+       
   end;
     
 end customerManager_pkg;
