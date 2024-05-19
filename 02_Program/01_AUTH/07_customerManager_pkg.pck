@@ -8,7 +8,7 @@ create or replace noneditionable package customerManager_pkg is
   function isPasswordSaltExists(p_passwordSalt in customer.passwordsalt%type)
     return pls_integer;
     
-  function login(p_emailId customer.emailid%type,
+  function isPasswordCorrect(p_emailId customer.emailid%type,
                   p_password customer.passwordhash%type) return pls_integer;
 
 end customerManager_pkg;
@@ -82,12 +82,13 @@ create or replace noneditionable package body customerManager_pkg is
   end;
 
   
-  function login(p_emailId  customer.emailid%type,
+  function isPasswordCorrect(p_emailId  customer.emailid%type,
                  p_password customer.passwordhash%type) return pls_integer is
     v_passwordSalt   customer.passwordsalt%type;
     v_passwordHash   customer.passwordhash%type;
     v_passwordHashed customer.passwordhash%type;
   begin
+    
     select passwordsalt, passwordhash
       into v_passwordSalt, v_passwordHash
       from customer c
