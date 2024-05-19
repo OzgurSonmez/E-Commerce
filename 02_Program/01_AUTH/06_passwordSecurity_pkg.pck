@@ -12,7 +12,7 @@ end passwordSecurity_pkg;
 /
 create or replace noneditionable package body passwordSecurity_pkg is
 
-  -- Verilen parola ve salt'ý birleþtirip hash'ler
+  -- Verilen parola ve salt'i birlestirip hash'ler
   function generateHash(p_password VARCHAR2,
                         p_salt     customer.passwordsalt%type)
     return customer.passwordhash%type is
@@ -24,10 +24,16 @@ create or replace noneditionable package body passwordSecurity_pkg is
   end;
 
   function generateSalt return customer.passwordsalt%type is
+    v_generatedSalt customer.passwordsalt%type;
   begin
-    -- 16 karakter rastgele string üretir. 
-    -- 'p' : Dönen string, yazdýrýlabilir karakterlerden oluþur.
-    return dbms_random.string('p', 16);
+    loop
+      -- 16 karakter rastgele string üretir. 
+      -- 'p' : Dönen string, yazdirilabilir karakterlerden olusur.
+      v_generatedSalt := dbms_random.string('p', 16);
+      -- Olusturulan salt benzersiz olana kadar yeni salt uretilir.
+      exit when Customermanager_Pkg.isPasswordSaltExists(v_generatedSalt) = 0;
+    end loop;
+    return v_generatedSalt;
   end;
 
 end passwordSecurity_pkg;
