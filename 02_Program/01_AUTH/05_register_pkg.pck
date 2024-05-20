@@ -1,19 +1,19 @@
 create or replace noneditionable package register_pkg is
   
-  procedure customerRegister(p_register in register_type);
+  procedure customerRegister(p_customerRegister in register_type);
 
 end register_pkg;
 /
 create or replace noneditionable package body register_pkg is
 
-  procedure customerRegister(p_register in register_type) is
+  procedure customerRegister(p_customerRegister in register_type) is
      v_emailId email.emailid%type; 
   begin
-    v_emailId := emailManager_pkg.addEmail(p_register.emailAddress);
+    v_emailId := emailManager_pkg.addEmail(p_customerRegister.emailAddress);
   
-    customerManager_pkg.register(p_firstname => p_register.firstName,
-                                 p_lastname  => p_register.lastName,
-                                 p_password  => p_register.password,
+    customerManager_pkg.register(p_firstname => p_customerRegister.firstName,
+                                 p_lastname  => p_customerRegister.lastName,
+                                 p_password  => p_customerRegister.password,
                                  p_emailId   => v_emailId);
 
   end;
