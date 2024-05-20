@@ -44,7 +44,7 @@ create or replace noneditionable package body customerManager_pkg is
        passwordSalt,
        emailid,
        isaccountactive)
-    VALUES
+    values
       (v_customerId,
        p_firstname,
        p_lastname,

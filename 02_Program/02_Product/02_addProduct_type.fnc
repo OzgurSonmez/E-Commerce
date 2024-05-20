@@ -1,5 +1,6 @@
 create or replace type addProduct_type as object
 (
+       categoryId number(8),
        brandId number(10),
        productName varchar2(100),
        productDescription varchar2(2000),
