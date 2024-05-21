@@ -1,0 +1,25 @@
+insert into brand (brandid, brandname) values (1, 'Huawei');
+insert into brand (brandid, brandname) values (2, 'Asus');
+insert into brand (brandid, brandname) values (3, 'Lenovo');
+insert into brand (brandid, brandname) values (4, 'Apple');
+insert into brand (brandid, brandname) values (5, 'MSI');
+insert into brand (brandid, brandname) values (6, 'LG');
+insert into brand (brandid, brandname) values (7, 'HP');
+insert into brand (brandid, brandname) values (8, 'Canon');
+insert into brand (brandid, brandname) values (9, 'Xiaomi');
+insert into brand (brandid, brandname) values (10,'Samsung');
+insert into brand (brandid, brandname) values (11,'Epson');
+insert into brand (brandid, brandname) values (12,'Philips');
+insert into brand (brandid, brandname) values (13,'Mavi');
+insert into brand (brandid, brandname) values (14,'DeFacto');
+insert into brand (brandid, brandname) values (15,'Jack & Jones');
+insert into brand (brandid, brandname) values (16,'Adidas');
+insert into brand (brandid, brandname) values (17,'Nike');
+insert into brand (brandid, brandname) values (18,'Puma');
+insert into brand (brandid, brandname) values (19,'Casio');
+insert into brand (brandid, brandname) values (20,'Seiko');
+insert into brand (brandid, brandname) values (21,'Ray-Ban');
+insert into brand (brandid, brandname) values (22,'Mustang');
+insert into brand (brandid, brandname) values (23,'Zen');
+
+commit;
