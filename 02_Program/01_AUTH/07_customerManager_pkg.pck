@@ -28,7 +28,7 @@ create or replace noneditionable package body customerManager_pkg is
     v_passwordSalt customer.passwordsalt%type;
   begin
     v_customerId := customer_seq.nextval;
-  
+    
     -- Salt üretir.
     v_passwordSalt := passwordSecurity_pkg.generateSalt();
   
@@ -44,7 +44,7 @@ create or replace noneditionable package body customerManager_pkg is
        passwordSalt,
        emailid,
        isaccountactive)
-    values
+    VALUES
       (v_customerId,
        p_firstname,
        p_lastname,
@@ -53,12 +53,15 @@ create or replace noneditionable package body customerManager_pkg is
        p_emailId,
        1);
   
+    -- Kullaniciya ait bir sepet olusturur.
+    basketManager_pkg.addBasket(p_customerId => v_customerId);
+    
     commit;
   
   exception
     when value_error then
       rollback;
-      raise_application_error(-20101, 'Geçersiz veri hatasy.');
+      raise_application_error(-20101, 'Geçersiz veri hatasi.');
     when others then
       rollback;
       raise_application_error(-20105,
