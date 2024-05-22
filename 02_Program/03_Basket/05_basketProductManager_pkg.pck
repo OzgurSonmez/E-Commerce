@@ -8,6 +8,13 @@ create or replace noneditionable package basketProductManager_pkg is
 
   procedure deleteProductFromBasket(p_basketId  basketproduct.basketid%type,
                                     p_productId basketproduct.productid%type);
+  
+  function getQuantityOfTheProductInBasket(p_basketId  basketproduct.basketid%type,
+                                           p_productId basketproduct.productid%type)
+    return basketProduct.productquantity%type;
+  
+  
+  procedure decreaseProductFromBasket(p_basketProduct in basketProduct_type);
 
 end basketProductManager_pkg;
 /
@@ -74,7 +81,7 @@ create or replace noneditionable package body basketProductManager_pkg is
                               'Urun sepete eklenirken bir hata olustu. ' ||
                               SQLERRM);
     
-  end;
+  end;  
 
   procedure deleteProductFromBasket(p_basketId  basketproduct.basketid%type,
                                     p_productId basketproduct.productid%type) is
@@ -94,5 +101,63 @@ create or replace noneditionable package body basketProductManager_pkg is
         raise_application_error(-20100, 'Urun sepetten silinirken bir hata olustu.');    
     end;
 
+
+  function getQuantityOfTheProductInBasket(p_basketId  basketproduct.basketid%type,
+                                           p_productId basketproduct.productid%type)
+    return basketProduct.productquantity%type is
+    v_quantityOfTheProductInBasket basketProduct.productquantity%type;
+  begin
+    select bp.productquantity
+      into v_quantityOfTheProductInBasket
+      from basketproduct bp
+     where bp.basketid = p_basketId
+       and bp.productid = p_productId
+       for update;
+    return v_quantityOfTheProductInBasket;
+  
+  exception
+    when others then
+      rollback;
+      raise_application_error(-20104,
+                              'Beklenmedik bir hata olustu. ' || SQLERRM);
+    
+  end;
+
+
+
+    procedure decreaseProductFromBasket(p_basketProduct in basketProduct_type) is
+      v_currentProductQuantity basketProduct.Productquantity%type;
+      v_resultProductQuantity  basketProduct.Productquantity%type;
+    begin
+      -- Urunun sepetteki guncel adedi getirilir.
+      v_currentProductQuantity := getQuantityOfTheProductInBasket(p_basketId  => p_basketProduct.basketId,
+                                                                  p_productId => p_basketProduct.productId);
+      -- Urunu sepetten cikartildiginde kac adet kalacagi hesaplanir.                                                            
+      v_resultProductQuantity := v_currentProductQuantity - nvl(p_basketProduct.productQuantity,1);
+      
+      if v_resultProductQuantity > 0 then
+        -- Urunun sepette kalacak adedi 0'dan buyuk ise deger guncellenir.
+        update basketProduct bp
+           set bp.productquantity = v_resultProductQuantity
+           where bp.basketid = p_basketProduct.basketId
+                 and bp.productid = p_basketProduct.productId;
+       else
+         -- Urunun sepette kalacak adedi 0 veya daha az ise urun sepetten silinir.
+         deleteProductFromBasket(p_basketId  => p_basketProduct.basketId,
+                                                p_productId => p_basketProduct.productId);
+        end if;
+        
+        commit;
+        
+    exception
+        when others then
+             rollback;
+             raise_application_error(-20104,
+                              'Beklenmedik bir hata olustu. ' || SQLERRM);      
+    
+    end;
+
+     
+  
 end basketProductManager_pkg;
 /
