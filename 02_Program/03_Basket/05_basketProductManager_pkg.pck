@@ -6,6 +6,9 @@ create or replace noneditionable package basketProductManager_pkg is
 
   procedure addProductToBasket(p_basketProduct in basketProduct_type);
 
+  procedure deleteProductFromBasket(p_basketId  basketproduct.basketid%type,
+                                    p_productId basketproduct.productid%type);
+
 end basketProductManager_pkg;
 /
 create or replace noneditionable package body basketProductManager_pkg is
@@ -45,8 +48,7 @@ create or replace noneditionable package body basketProductManager_pkg is
         into v_currentProductQuantity;
       update basketproduct bp
          set bp.productquantity = v_currentProductQuantity +
-                                  nvl(p_basketProduct.productQuantity,
-                                      nvl(p_basketProduct.isSelected, 1))
+                                  nvl(p_basketProduct.productQuantity,1)                                     
        where current of c_updateProductQuantity;
       close c_updateProductQuantity;
     
@@ -73,6 +75,24 @@ create or replace noneditionable package body basketProductManager_pkg is
                               SQLERRM);
     
   end;
+
+  procedure deleteProductFromBasket(p_basketId  basketproduct.basketid%type,
+                                    p_productId basketproduct.productid%type) is
+  begin
+    -- Parametreden gelen product'i basket'den siler.
+    delete from basketproduct bp
+       where bp.basketid = p_basketId
+             and bp.productid = p_productId;
+             
+    commit;
+    
+    exception 
+      when no_data_found then
+        raise_application_error(-20120, 'Silinecek urun bulunamadi.');
+      when others then
+        rollback;
+        raise_application_error(-20100, 'Urun sepetten silinirken bir hata olustu.');    
+    end;
 
 end basketProductManager_pkg;
 /
