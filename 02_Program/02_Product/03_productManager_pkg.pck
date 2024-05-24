@@ -5,6 +5,10 @@ create or replace noneditionable package productManager_pkg is
   procedure deleteProduct(p_productId product.productid%type);
 
   procedure filterProduct(p_filterProduct in filterProduct_type);
+  
+  procedure increaseProductFavoriteCount(p_productId product.productid%type);
+  
+  procedure decreaseProductFavoriteCount(p_productId product.productid%type);
 
 end productManager_pkg;
 /
@@ -175,6 +179,79 @@ create or replace noneditionable package body productManager_pkg is
                               'Urünleri listelerken beklenmedik bir hata olustu. Hata kodu: ' ||
                               sqlerrm);
   END;
+
+  procedure increaseProductFavoriteCount(p_productId product.productid%type) is
+  
+    cursor c_productFavoriteCount is
+      select p.favcount
+        from product p
+       where p.productid = p_productId
+         for update;
+    v_currentProductFavoriteCount product.favcount%type;
+  begin
+    open c_productFavoriteCount;
+    fetch c_productFavoriteCount
+      into v_currentProductFavoriteCount;
+  
+    if c_productFavoriteCount%found then
+      update product p 
+             set p.favcount = v_currentProductFavoriteCount + 1
+             where current of c_productFavoriteCount;
+    else
+      rollback;
+      raise_application_error(-20117,
+                              'Belirtilen productId ile eslesen urun bulunamadi.');
+    end if;
+  
+    close c_productFavoriteCount;
+    
+    exception
+       when others then
+        if c_productFavoriteCount%isopen then
+          close c_productFavoriteCount;          
+        end if;
+        rollback;
+        raise_application_error(-20105,
+                              'Beklenmedik bir hata olustu. Hata kodu: ' ||
+                              sqlerrm);
+  end;
+  
+  
+  procedure decreaseProductFavoriteCount(p_productId product.productid%type) is
+  
+    cursor c_productFavoriteCount is
+      select p.favcount
+        from product p
+       where p.productid = p_productId
+         for update;
+    v_currentProductFavoriteCount product.favcount%type;
+  begin
+    
+    open c_productFavoriteCount;
+    fetch c_productFavoriteCount
+      into v_currentProductFavoriteCount;
+  
+    if c_productFavoriteCount%found then
+      update product p 
+             set p.favcount = v_currentProductFavoriteCount - 1
+             where current of c_productFavoriteCount;
+    else
+      rollback;
+      raise_application_error(-20117,
+                              'Belirtilen productId ile eslesen urun bulunamadi.');
+    end if;
+    close c_productFavoriteCount; 
+    
+    exception
+       when others then
+        if c_productFavoriteCount%isopen then
+          close c_productFavoriteCount;          
+        end if;
+        rollback;
+        raise_application_error(-20105,
+                              'Beklenmedik bir hata olustu. Hata kodu: ' ||
+                              sqlerrm);
+  end;
 
 end productManager_pkg;
 /
