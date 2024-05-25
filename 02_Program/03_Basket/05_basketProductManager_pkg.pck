@@ -1,4 +1,4 @@
-create or replace package basketProductManager_pkg is
+create or replace noneditionable package basketProductManager_pkg is
 
   function getProductCountInBasket(p_basketId  basketproduct.basketid%type,
                                    p_productId basketproduct.productid%type)
@@ -18,13 +18,16 @@ create or replace package basketProductManager_pkg is
   
   
   function getSelectedBasketProductByBasketId(p_basketId basketProduct.basketid%type) 
-    return getBasketProductList_type; 
+    return getBasketProductList_type;
+    
+  procedure deleteProductListFromBasket(p_list_basketProduct getBasketProductList_type); 
   
-  
+  procedure reverseSelectedStatusOfTheProductInBasket(p_basketId  basketproduct.basketid%type,
+                                                      p_productId basketproduct.productid%type);
 
 end basketProductManager_pkg;
 /
-create or replace package body basketProductManager_pkg is
+create or replace noneditionable package body basketProductManager_pkg is
 
   function getProductCountInBasket(p_basketId  basketproduct.basketid%type,
                                    p_productId basketproduct.productid%type)
@@ -162,6 +165,8 @@ create or replace package body basketProductManager_pkg is
     
   end;
 
+  
+  
   function getSelectedBasketProductByBasketId(p_basketId basketProduct.basketid%type)
     return getBasketProductList_type is
     
@@ -203,6 +208,62 @@ create or replace package body basketProductManager_pkg is
                               'Beklenmedik bir hata olustu. ' || SQLERRM);
                               
   end;
-
+  
+  
+  procedure deleteProductListFromBasket(p_list_basketProduct getBasketProductList_type) is
+    v_list_index pls_integer;
+  begin
+    v_list_index := p_list_basketProduct.first;
+    
+     while v_list_index is not null loop    
+      delete basketproduct bp
+          where bp.basketproductid = p_list_basketProduct(v_list_index).basketProductId;    
+      v_list_index := p_list_basketProduct.Next(v_list_index);
+    end loop;
+    
+    exception
+      when others then
+         rollback;
+         raise_application_error(-20104,'Beklenmedik bir hata olustu. ' || SQLERRM);
+  end;
+  
+  
+  
+  procedure reverseSelectedStatusOfTheProductInBasket(p_basketId  basketproduct.basketid%type,
+                                                      p_productId basketproduct.productid%type) is
+  cursor c_selectedStatus is 
+                          select bp.isselected from basketproduct bp
+                                 where bp.basketid = p_basketId
+                                       and bp.productid = p_productId
+                                           for update;
+  v_selectedStatus basketproduct.isselected%type;
+  begin
+    open c_selectedStatus;
+    fetch c_selectedStatus into v_selectedStatus;
+    
+    if v_selectedStatus = 0 then
+      update basketproduct bp
+         set bp.isselected = 1
+         where current of c_selectedStatus;
+    else 
+      update basketproduct bp
+         set bp.isselected = 0
+         where current of c_selectedStatus;
+    end if;
+    
+    close c_selectedStatus;
+    
+    commit;
+    
+    exception
+      when others then
+         rollback;
+         raise_application_error(-20104,'Beklenmedik bir hata olustu. ' || SQLERRM);
+        
+  end;
+  
+  
+  
+  
 end basketProductManager_pkg;
 /
