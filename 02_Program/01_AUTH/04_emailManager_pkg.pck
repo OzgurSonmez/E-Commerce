@@ -49,7 +49,7 @@ create or replace noneditionable package body emailManager_pkg is
     -- Email adresi ile eslesen birden fazla veri varsa too_many_rows hatasi alinir.
     exception
       when no_data_found then
-        ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_EMAIL_ADDRESS_DUPLICATE);
+        ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_EMAIL_ADDRESS_NOT_FOUND);
       when too_many_rows then
         ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_EMAIL_ADDRESS_TOO_MANY_ROWS);
       when others then

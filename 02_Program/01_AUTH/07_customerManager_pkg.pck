@@ -26,16 +26,29 @@ create or replace noneditionable package body customerManager_pkg is
     v_customerId   customer.customerid%type;
     v_passwordHash customer.passwordhash%type;
     v_passwordSalt customer.passwordsalt%type;
+    v_isAccountActive customer.isaccountactive%type;
   begin
     v_customerId := customer_seq.nextval;
     
     -- Salt üretir.
     v_passwordSalt := passwordSecurity_pkg.generateSalt();
   
-    -- Üretilen salt ile passwordu birle?tirip hash'ler
-    v_passwordHash := passwordSecurity_pkg.generateHash(p_password => p_password,
+    -- Üretilen salt ile passwordu birlestirip hash'ler
+    v_passwordHash := passwordSecurity_pkg.generateHash(p_password => p_password,    
                                                         p_salt     => v_passwordSalt);
-  
+    -- Default olarak hesap aktif olusturulur.                                                    
+    v_isAccountActive := 1;
+    
+    -- Parametre kontrolleri yapilir.
+    ecpValidate_pkg.emailParameters(p_emailId => p_emailId);
+    ecpValidate_pkg.customerParameters(p_customerId => v_customerId,
+                                       p_firstName => p_firstname,
+                                       p_lastName => p_lastname,
+                                       p_passwordHash => v_passwordHash,
+                                       p_passwordSalt => v_passwordSalt,
+                                       p_isAccountActive => v_isAccountActive);
+                                       
+    -- Yeni müsteri eklenir.
     insert into customer
       (customerid,
        firstname,
@@ -44,29 +57,27 @@ create or replace noneditionable package body customerManager_pkg is
        passwordSalt,
        emailid,
        isaccountactive)
-    VALUES
+    values
       (v_customerId,
        p_firstname,
        p_lastname,
        v_passwordHash,
        v_passwordSalt,
        p_emailId,
-       1);
+       v_isAccountActive);
   
-    -- Kullaniciya ait bir sepet olusturur.
+    -- Musteriye ait bir sepet olusturur.
     basketManager_pkg.addBasket(p_customerId => v_customerId);
     
     commit;
   
   exception
-    when value_error then
+    when dup_val_on_index then
       rollback;
-      raise_application_error(-20101, 'Geçersiz veri hatasi.');
+      ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_CUSTOMER_DUPLICATE);
     when others then
       rollback;
-      raise_application_error(-20105,
-                              'Beklenmeyen bir hata olu?tu. Hata kodu: ' ||
-                              sqlerrm);
+      ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_OTHERS);
     
   end;
 
@@ -74,7 +85,11 @@ create or replace noneditionable package body customerManager_pkg is
     return pls_integer is
     v_passwordSaltExists pls_integer;
   begin
-    -- Parametreden gelen passwordSalt'yn varly?yny customer tablosunda kontrol eder.
+    -- Parametre kontrolu yapilir.
+    ecpValidate_pkg.customerParameters(p_passwordSalt => p_passwordSalt);  
+  
+    -- Parametreden gelen passwordSalt'in varligini customer tablosunda kontrol eder.
+    -- Sonucu 1 veya 0 olarak doner.
     select case
              when exists (select 1
                      from customer c
@@ -87,6 +102,12 @@ create or replace noneditionable package body customerManager_pkg is
       from dual;
   
     return v_passwordSaltExists;
+    
+    exception
+      when no_data_found then
+         ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_CUSTOMER_PASSWORD_NOT_FOUND);
+      when others then
+         ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_OTHERS);    
   end;
 
   function isPasswordCorrect(p_emailId  customer.emailid%type,
@@ -96,24 +117,32 @@ create or replace noneditionable package body customerManager_pkg is
     v_passwordHash   customer.passwordhash%type;
     v_passwordHashed customer.passwordhash%type;
   begin
-  
+    -- Parametre kontrolu yapilir.
+    ecpValidate_pkg.emailParameters(p_emailId => p_emailId); 
+   
+    -- Parametreden gelen emailId'ye gore musterinin Hash ve Salt parolasini getirir.
     select passwordsalt, passwordhash
       into v_passwordSalt, v_passwordHash
       from customer c
      where c.emailid = p_emailId;
-  
+    
+    -- Parametreden gelen parola ile musterinin salt parolarisini hash'ler.
     v_passwordHashed := passwordsecurity_pkg.generateHash(p_password => p_password,
                                                           p_salt     => v_passwordSalt);
-  
+    
+    -- Veritabanindaki hash ile uretilen hash esitleniyorsa 1, esitlenmiyorsa 0 doner.
     if (v_passwordHash = v_passwordHashed) then
       return 1;
     else
       return 0;
     end if;
-  
-  exception
-    when no_data_found then
-      return 0;
+    
+    -- EmailId'ye gore parola bulunamazsa hata verir.
+    exception
+      when no_data_found then
+           ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_CUSTOMER_PASSWORD_NOT_FOUND); 
+      when others then
+           ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_OTHERS);  
   end;
 
   procedure changePassword(p_emailId     email.emailid%type,
@@ -130,19 +159,36 @@ create or replace noneditionable package body customerManager_pkg is
     v_newPasswordSalt := passwordsecurity_pkg.generateSalt();
     v_newPasswordHash := passwordsecurity_pkg.generateHash(p_password => p_newPassword, p_salt => v_newPasswordSalt);
     
+    -- Parametre kontrolu yapilir.
+    ecpValidate_pkg.emailParameters(p_emailId => p_emailId);
+    ecpValidate_pkg.customerParameters(p_passwordHash => v_newPasswordHash, 
+                                       p_passwordSalt => v_newPasswordSalt);
+    
+    -- Sifre degisikligi icin cursor acilir ve yeni salt ve hash parolalar update edilir.
     open c_changePasswordCustomer;
     fetch c_changePasswordCustomer into v_changePasswordCustomer;
        update customer c
         set c.passwordhash = v_newPasswordHash, c.passwordsalt = v_newPasswordSalt
         where current of c_changePasswordCustomer;
     close c_changePasswordCustomer;
+    
     commit;
     
-    exception 
+    -- Uygun musteri bulunamazsa hata verir.
+    -- Benzersiz password salt uretilmezse hata verir.
+    exception
+      when no_data_found then
+        close c_changePasswordCustomer;
+        rollback;
+        ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_CUSTOMER_NOT_FOUND);
+      when dup_val_on_index then
+        close c_changePasswordCustomer;
+        rollback;
+        ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_CUSTOMER_DUPLICATE);        
       when others then
       close c_changePasswordCustomer;
       rollback;
-      raise_application_error(-20104, 'Sifre degistirme basarisiz. ' || SQLERRM);
+      ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_OTHERS);
     
   end;
 
