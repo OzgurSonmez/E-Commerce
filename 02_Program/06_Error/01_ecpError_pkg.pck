@@ -12,6 +12,10 @@ create or replace noneditionable package ecpError_pkg is
   ERR_CODE_PRODUCT_NOT_FOUND CONSTANT NUMBER := -20108;
   ERR_CODE_BASKET_DUPLICATE CONSTANT NUMBER := -20109;
   ERR_CODE_BASKET_NOT_FOUND CONSTANT NUMBER := -20110;
+  ERR_CODE_PRODUCT_NOT_FOUND_TO_DELETE_FROM_BASKET CONSTANT NUMBER := -20111;
+  ERR_CODE_PRODUCT_NOT_FOUND_FROM_BASKET_FOR_UPDATE CONSTANT NUMBER := -20112;
+  ERR_CODE_PRODUCT_NOT_FOUND_IN_BASKET CONSTANT NUMBER := -20113;
+  ERR_CODE_PRODUCT_TOO_MANY_ROWS_IN_BASKET CONSTANT NUMBER := -20114;
   
   -- Hata mesajlari --------------
   ERR_MSG_OTHERS CONSTANT VARCHAR2(100) := 'Beklenmedik bir hata olustu. '; 
@@ -25,6 +29,10 @@ create or replace noneditionable package ecpError_pkg is
   ERR_MSG_PRODUCT_NOT_FOUND CONSTANT VARCHAR2(100) := 'Urun bulunamadi';
   ERR_MSG_BASKET_DUPLICATE  CONSTANT VARCHAR2(100) := 'Bir musterinin birden fazla sepeti olamaz.';
   ERR_MSG_BASKET_NOT_FOUND  CONSTANT VARCHAR2(100) := 'Musteriye ait sepet bulunamadi.';
+  ERR_MSG_PRODUCT_NOT_FOUND_TO_DELETE_FROM_BASKET CONSTANT VARCHAR2(100) := 'Silinecek urun sepette bulunamadi';
+  ERR_MSG_PRODUCT_NOT_FOUND_FROM_BASKET_FOR_UPDATE CONSTANT VARCHAR2(100) := 'Guncellenecek urun sepette bulunamadi';
+  ERR_MSG_PRODUCT_NOT_FOUND_IN_BASKET CONSTANT VARCHAR2(100) := 'Bu urun sepette bulunamadi.';
+  ERR_MSG_PRODUCT_TOO_MANY_ROWS_IN_BASKET CONSTANT VARCHAR2(100) := 'Ayni sepete ait birden fazla ayný urun bulundu.';
   
   -- Validasyon hata kodlari --------------
   -- Email
@@ -57,6 +65,10 @@ create or replace noneditionable package ecpError_pkg is
   ERR_CODE_PARENT_CATEGORY_ID_INVALID CONSTANT NUMBER := -20522;
   -- Basket
   ERR_CODE_BASKET_ID_INVALID CONSTANT NUMBER := -20523;
+  -- BasketProduct
+  ERR_CODE_BASKET_PRODUCT_ID_INVALID CONSTANT NUMBER := -20524;
+  ERR_CODE_PRODUCT_QUANTITY_INVALID CONSTANT NUMBER := -20525;
+  ERR_CODE_BASKET_PRODUCT_IS_SELECTED_INVALID CONSTANT NUMBER := -20526;
   
   -- Validasyon hata mesajlari --------------
   -- Email
@@ -89,6 +101,10 @@ create or replace noneditionable package ecpError_pkg is
   ERR_MSG_PARENT_CATEGORY_ID_INVALID CONSTANT VARCHAR2(100) := 'Gecersiz Ebeveyn Kategori Id.';
   -- Basket
   ERR_MSG_BASKET_ID_INVALID CONSTANT VARCHAR2(100) := 'Gecersiz Sepet Id.';
+  -- BasketProduct
+  ERR_MSG_BASKET_PRODUCT_ID_INVALID CONSTANT VARCHAR2(100) := 'Gecersiz SepetUrun Id.(BasketProductID)';
+  ERR_MSG_PRODUCT_QUANTITY_INVALID CONSTANT VARCHAR2(100) := 'Gecersiz urun adedi.';
+  ERR_MSG_BASKET_PRODUCT_IS_SELECTED_INVALID CONSTANT VARCHAR2(100) := 'Gecersiz urun secim durumu.';
   
   ------------------------------------------------------------------------------------
   procedure raiseError(p_ecpErrorCode in number);
@@ -171,8 +187,21 @@ create or replace noneditionable package body ecpError_pkg is
       when ERR_CODE_BASKET_DUPLICATE then
           errorMessage := ERR_MSG_BASKET_DUPLICATE;
       when ERR_CODE_BASKET_NOT_FOUND then
-          errorMessage := ERR_MSG_BASKET_NOT_FOUND;      
-
+          errorMessage := ERR_MSG_BASKET_NOT_FOUND;
+      when ERR_CODE_BASKET_PRODUCT_ID_INVALID then
+          errorMessage := ERR_MSG_BASKET_PRODUCT_ID_INVALID;
+      when ERR_CODE_PRODUCT_QUANTITY_INVALID then
+          errorMessage := ERR_MSG_PRODUCT_QUANTITY_INVALID;      
+      when ERR_CODE_BASKET_PRODUCT_IS_SELECTED_INVALID then
+          errorMessage := ERR_MSG_BASKET_PRODUCT_IS_SELECTED_INVALID;    
+      when ERR_CODE_PRODUCT_NOT_FOUND_TO_DELETE_FROM_BASKET then
+          errorMessage := ERR_MSG_PRODUCT_NOT_FOUND_TO_DELETE_FROM_BASKET;
+      when ERR_CODE_PRODUCT_NOT_FOUND_FROM_BASKET_FOR_UPDATE then
+          errorMessage := ERR_MSG_PRODUCT_NOT_FOUND_FROM_BASKET_FOR_UPDATE;              
+      when ERR_CODE_PRODUCT_NOT_FOUND_IN_BASKET then
+          errorMessage := ERR_MSG_PRODUCT_NOT_FOUND_IN_BASKET;     
+      when ERR_CODE_PRODUCT_TOO_MANY_ROWS_IN_BASKET then
+          errorMessage := ERR_MSG_PRODUCT_TOO_MANY_ROWS_IN_BASKET;    
 
       else
           errorMessage := ERR_MSG_OTHERS || sqlerrm;          
