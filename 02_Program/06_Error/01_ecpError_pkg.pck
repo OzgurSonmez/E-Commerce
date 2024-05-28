@@ -20,6 +20,8 @@ create or replace noneditionable package ecpError_pkg is
   ERR_CODE_CUSTOMER_ORDER_NOT_FOUND_FOR_UPDATE CONSTANT NUMBER := -20116;
   ERR_CODE_CUSTOMER_PRODUCT_FAVORITE_INSERT CONSTANT NUMBER := -20117;
   ERR_CODE_CUSTOMER_PRODUCT_FAVORITE_NOT_FOUND_FOR_UPDATE CONSTANT NUMBER := -20118;
+  ERR_CODE_PRODUCT_CATEGORY_INSERT CONSTANT NUMBER := -20119;
+  ERR_CODE_PRODUCT_CATEGORY_NOT_FOUND_TO_DELETE CONSTANT NUMBER := -20120;
   
   -- Hata mesajlari --------------
   ERR_MSG_OTHERS CONSTANT VARCHAR2(100) := 'Beklenmedik bir hata olustu. '; 
@@ -41,6 +43,9 @@ create or replace noneditionable package ecpError_pkg is
   ERR_MSG_CUSTOMER_ORDER_NOT_FOUND_FOR_UPDATE CONSTANT VARCHAR2(100) := 'Guncellenecek musteri siparisi bulunamadi';
   ERR_MSG_CUSTOMER_PRODUCT_FAVORITE_INSERT CONSTANT VARCHAR2(100) := 'Kullanici urunu favoriye eklerken bir hata olustu.';
   ERR_MSG_CUSTOMER_PRODUCT_FAVORITE_NOT_FOUND_FOR_UPDATE CONSTANT VARCHAR2(100) := 'Favori durumu guncellenmesi icin uygun urun bulunamadi.';
+  ERR_MSG_PRODUCT_CATEGORY_INSERT CONSTANT VARCHAR2(100) := 'Kategoriye urun eklerken bir hata olustu.';
+  ERR_MSG_PRODUCT_CATEGORY_NOT_FOUND_TO_DELETE CONSTANT VARCHAR2(100) := 'Kategoriden silinecek urun bulunamadi.';
+  
   -- Validasyon hata kodlari --------------
   -- Email
   ERR_CODE_EMAIL_ID_INVALID CONSTANT NUMBER := -20501;
@@ -241,7 +246,11 @@ create or replace noneditionable package body ecpError_pkg is
       when ERR_CODE_CUSTOMER_PRODUCT_FAVORITE_INSERT then
           errorMessage := ERR_MSG_CUSTOMER_PRODUCT_FAVORITE_INSERT;
       when ERR_CODE_CUSTOMER_PRODUCT_FAVORITE_NOT_FOUND_FOR_UPDATE then
-          errorMessage := ERR_MSG_CUSTOMER_PRODUCT_FAVORITE_NOT_FOUND_FOR_UPDATE;      
+          errorMessage := ERR_MSG_CUSTOMER_PRODUCT_FAVORITE_NOT_FOUND_FOR_UPDATE;
+      when ERR_CODE_PRODUCT_CATEGORY_INSERT then
+          errorMessage := ERR_MSG_PRODUCT_CATEGORY_INSERT;
+      when ERR_CODE_PRODUCT_CATEGORY_NOT_FOUND_TO_DELETE then
+          errorMessage := ERR_MSG_PRODUCT_CATEGORY_NOT_FOUND_TO_DELETE;       
 
       else
           errorMessage := ERR_MSG_OTHERS || sqlerrm;          
