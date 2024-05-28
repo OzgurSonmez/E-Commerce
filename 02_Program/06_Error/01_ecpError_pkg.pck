@@ -22,6 +22,8 @@ create or replace noneditionable package ecpError_pkg is
   ERR_CODE_CUSTOMER_PRODUCT_FAVORITE_NOT_FOUND_FOR_UPDATE CONSTANT NUMBER := -20118;
   ERR_CODE_PRODUCT_CATEGORY_INSERT CONSTANT NUMBER := -20119;
   ERR_CODE_PRODUCT_CATEGORY_NOT_FOUND_TO_DELETE CONSTANT NUMBER := -20120;
+  ERR_CODE_TAX_NOT_FOUND CONSTANT NUMBER := -20121;
+  ERR_CODE_TAX_TOO_MANY_ROWS CONSTANT NUMBER := -20122;
   
   -- Hata mesajlari --------------
   ERR_MSG_OTHERS CONSTANT VARCHAR2(100) := 'Beklenmedik bir hata olustu. '; 
@@ -45,6 +47,8 @@ create or replace noneditionable package ecpError_pkg is
   ERR_MSG_CUSTOMER_PRODUCT_FAVORITE_NOT_FOUND_FOR_UPDATE CONSTANT VARCHAR2(100) := 'Favori durumu guncellenmesi icin uygun urun bulunamadi.';
   ERR_MSG_PRODUCT_CATEGORY_INSERT CONSTANT VARCHAR2(100) := 'Kategoriye urun eklerken bir hata olustu.';
   ERR_MSG_PRODUCT_CATEGORY_NOT_FOUND_TO_DELETE CONSTANT VARCHAR2(100) := 'Kategoriden silinecek urun bulunamadi.';
+  ERR_MSG_TAX_NOT_FOUND CONSTANT VARCHAR2(100) := 'Vergi bulunamadi.';
+  ERR_MSG_TAX_TOO_MANY_ROWS CONSTANT VARCHAR2(100) := 'Girilen vergi adindan birden fazla var.';
   
   -- Validasyon hata kodlari --------------
   -- Email
@@ -89,7 +93,11 @@ create or replace noneditionable package ecpError_pkg is
   ERR_CODE_CUSTOMER_ORDER_DETAIL_ID_INVALID CONSTANT NUMBER := -20531;
   -- CustomerProductFavorite
   ERR_CODE_CUSTOMER_PRODUCT_IS_FAVORITE_INVALID CONSTANT NUMBER := -20532;
-   
+   -- Tax
+  ERR_CODE_TAX_ID_INVALID CONSTANT NUMBER := -20533;
+  ERR_CODE_TAX_NAME_TOO_LONG CONSTANT NUMBER := -20534;
+  ERR_CODE_TAX_PERCENTAGE_INVALID CONSTANT NUMBER := -20535; 
+  
   -- Validasyon hata mesajlari --------------
   -- Email
   ERR_MSG_EMAIL_ID_INVALID CONSTANT VARCHAR2(100) := 'Gecersiz Email Id.';
@@ -133,6 +141,11 @@ create or replace noneditionable package ecpError_pkg is
   ERR_MSG_CUSTOMER_ORDER_DETAIL_ID_INVALID CONSTANT VARCHAR2(100) := 'Gecersiz musteri siparis detay Id';
  -- CustomerProductFavorite 
  ERR_MSG_CUSTOMER_PRODUCT_IS_FAVORITE_INVALID CONSTANT VARCHAR2(100) := 'Gecersiz urun favori secim durumu.';
+ -- Tax
+  ERR_MSG_TAX_ID_INVALID CONSTANT VARCHAR2(100) := 'Gecersiz vergi Id.';
+  ERR_MSG_TAX_NAME_TOO_LONG CONSTANT VARCHAR2(100) := 'Vergi adi cok uzun.';
+  ERR_MSG_TAX_PERCENTAGE_INVALID CONSTANT VARCHAR2(100) := 'Gecersiz vergi yuzdesi.';
+
   ------------------------------------------------------------------------------------
   procedure raiseError(p_ecpErrorCode in number);
 
@@ -251,7 +264,17 @@ create or replace noneditionable package body ecpError_pkg is
           errorMessage := ERR_MSG_PRODUCT_CATEGORY_INSERT;
       when ERR_CODE_PRODUCT_CATEGORY_NOT_FOUND_TO_DELETE then
           errorMessage := ERR_MSG_PRODUCT_CATEGORY_NOT_FOUND_TO_DELETE;       
-
+      when ERR_CODE_TAX_ID_INVALID then
+          errorMessage := ERR_MSG_TAX_ID_INVALID;
+      when ERR_CODE_TAX_NAME_TOO_LONG then
+          errorMessage := ERR_MSG_TAX_NAME_TOO_LONG;
+      when ERR_CODE_TAX_PERCENTAGE_INVALID then
+          errorMessage := ERR_MSG_TAX_PERCENTAGE_INVALID;
+      when ERR_CODE_TAX_NOT_FOUND then
+          errorMessage := ERR_MSG_TAX_NOT_FOUND;
+      when ERR_CODE_TAX_TOO_MANY_ROWS then
+          errorMessage := ERR_MSG_TAX_TOO_MANY_ROWS;     
+         
       else
           errorMessage := ERR_MSG_OTHERS || sqlerrm;          
     end case;

@@ -45,6 +45,10 @@ create or replace noneditionable package ecpValidate_pkg is
 
   procedure customerProductFavoriteParameters(p_isFavorite in number default null);
 
+  procedure taxParameters(p_taxId in number default null,
+                          p_taxName in varchar2 default null,
+                          p_taxPercentage in number default null);
+
 
 end ecpValidate_pkg;
 /
@@ -340,7 +344,31 @@ create or replace noneditionable package body ecpValidate_pkg is
         end if;
       end if;
     end;            
-                  
+    
+     procedure taxParameters(p_taxId in number default null,
+                             p_taxName in varchar2 default null,
+                             p_taxPercentage in number default null) is
+     begin
+     -- TaxId'yi kontrol eder.
+      if p_taxId is not null then
+        if (p_taxId < 0 or p_taxId > 999) then
+           ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_TAX_ID_INVALID);
+        end if;
+      end if;
+      -- Tax Name'in uzunlugunu kontrol eder.
+      if p_taxName is not null then
+         if length(p_taxName) > 100 then
+           ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_TAX_NAME_TOO_LONG);
+         end if;  
+      end if;
+      -- Tax Percentage'i kontrol eder.
+      if p_taxPercentage is not null then
+        if (p_taxPercentage < 0 or p_taxPercentage > 99999) then
+           ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_TAX_PERCENTAGE_INVALID);
+        end if;
+      end if;        
+     end;
+                                   
 
 end ecpValidate_pkg;
 /
