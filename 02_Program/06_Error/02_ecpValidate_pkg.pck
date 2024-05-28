@@ -38,8 +38,16 @@ create or replace noneditionable package ecpValidate_pkg is
                                     p_orderNo         in varchar2 default null,
                                     p_orderDate       in date default null,
                                     p_totalPrice      in number default null);
-                                    
-
+     
+  procedure customerOrderDetailParameters(p_customerOrderDetailId in number default null,
+                                          p_productQuantity       in number default null,
+                                          p_productUnitPrice      in number default null);                                                          
+  -- Name                   Type          
+  -- CUSTOMERORDERDETAILID  NUMBER(25)                    
+                       
+  -- QUANTITY               NUMBER(10)                       
+  -- UNITPRICE              NUMBER(11,2)
+  
 
 
 end ecpValidate_pkg;
@@ -303,13 +311,31 @@ create or replace noneditionable package body ecpValidate_pkg is
       end if;
     end;                          
 
-
-
-                     
-                      
--- ORDERNO            VARCHAR2(30)                     
--- ORDERDATE          DATE                             
--- TOTALPRICE         NUMBER(12,2)                     
+    procedure customerOrderDetailParameters(p_customerOrderDetailId in number default null,
+                                            p_productQuantity       in number default null,
+                                            p_productUnitPrice      in number default null) is
+    begin
+      -- CustomerOrderDetailId'yi kontrol eder.
+      if p_customerOrderDetailId is not null then
+        if (p_customerOrderDetailId < 0 or p_customerOrderDetailId > 9999999999999999999999999) then
+           ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_CUSTOMER_ORDER_DETAIL_ID_INVALID);
+        end if;
+      end if;
+      -- Product Quantity'yi kontrol eder.
+      if p_productQuantity is not null then
+        if (p_productQuantity < 0 or p_productQuantity > 9999999999) then
+           ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_PRODUCT_QUANTITY_INVALID);
+        end if;
+      end if;
+      -- Product Unit Price'i kontrol eder.
+      if p_productUnitPrice is not null then
+        if (p_productUnitPrice < 0 or p_productUnitPrice > 9999999999) then
+           ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_PRODUCT_PRICE_INVALID);
+        end if;
+      end if;      
+    end;                                                          
+                
+                  
 
 end ecpValidate_pkg;
 /
