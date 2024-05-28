@@ -18,6 +18,8 @@ create or replace noneditionable package ecpError_pkg is
   ERR_CODE_PRODUCT_TOO_MANY_ROWS_IN_BASKET CONSTANT NUMBER := -20114;
   ERR_CODE_CUSTOMER_ORDER_NO_DUPLICATE CONSTANT NUMBER := -20115;
   ERR_CODE_CUSTOMER_ORDER_NOT_FOUND_FOR_UPDATE CONSTANT NUMBER := -20116;
+  ERR_CODE_CUSTOMER_PRODUCT_FAVORITE_INSERT CONSTANT NUMBER := -20117;
+  ERR_CODE_CUSTOMER_PRODUCT_FAVORITE_NOT_FOUND_FOR_UPDATE CONSTANT NUMBER := -20118;
   
   -- Hata mesajlari --------------
   ERR_MSG_OTHERS CONSTANT VARCHAR2(100) := 'Beklenmedik bir hata olustu. '; 
@@ -37,7 +39,8 @@ create or replace noneditionable package ecpError_pkg is
   ERR_MSG_PRODUCT_TOO_MANY_ROWS_IN_BASKET CONSTANT VARCHAR2(100) := 'Ayni sepete ait birden fazla ayný urun bulundu.';
   ERR_MSG_CUSTOMER_ORDER_NO_DUPLICATE CONSTANT VARCHAR2(100) := 'Bu siparis numarasi zaten kayitli.';
   ERR_MSG_CUSTOMER_ORDER_NOT_FOUND_FOR_UPDATE CONSTANT VARCHAR2(100) := 'Guncellenecek musteri siparisi bulunamadi';
-  
+  ERR_MSG_CUSTOMER_PRODUCT_FAVORITE_INSERT CONSTANT VARCHAR2(100) := 'Kullanici urunu favoriye eklerken bir hata olustu.';
+  ERR_MSG_CUSTOMER_PRODUCT_FAVORITE_NOT_FOUND_FOR_UPDATE CONSTANT VARCHAR2(100) := 'Favori durumu guncellenmesi icin uygun urun bulunamadi.';
   -- Validasyon hata kodlari --------------
   -- Email
   ERR_CODE_EMAIL_ID_INVALID CONSTANT NUMBER := -20501;
@@ -79,7 +82,8 @@ create or replace noneditionable package ecpError_pkg is
   ERR_CODE_TOTAL_PRICE_INVALID CONSTANT NUMBER := -20530;
   -- CustomerOrderDetail
   ERR_CODE_CUSTOMER_ORDER_DETAIL_ID_INVALID CONSTANT NUMBER := -20531;
-
+  -- CustomerProductFavorite
+  ERR_CODE_CUSTOMER_PRODUCT_IS_FAVORITE_INVALID CONSTANT NUMBER := -20532;
    
   -- Validasyon hata mesajlari --------------
   -- Email
@@ -122,7 +126,8 @@ create or replace noneditionable package ecpError_pkg is
   ERR_MSG_TOTAL_PRICE_INVALID CONSTANT VARCHAR2(100) := 'Gecersiz toplam siparis tutari';
   -- CustomerOrderDetail
   ERR_MSG_CUSTOMER_ORDER_DETAIL_ID_INVALID CONSTANT VARCHAR2(100) := 'Gecersiz musteri siparis detay Id';
-  
+ -- CustomerProductFavorite 
+ ERR_MSG_CUSTOMER_PRODUCT_IS_FAVORITE_INVALID CONSTANT VARCHAR2(100) := 'Gecersiz urun favori secim durumu.';
   ------------------------------------------------------------------------------------
   procedure raiseError(p_ecpErrorCode in number);
 
@@ -230,7 +235,13 @@ create or replace noneditionable package body ecpError_pkg is
       when ERR_CODE_CUSTOMER_ORDER_NOT_FOUND_FOR_UPDATE then
           errorMessage := ERR_MSG_CUSTOMER_ORDER_NOT_FOUND_FOR_UPDATE;      
       when ERR_CODE_CUSTOMER_ORDER_DETAIL_ID_INVALID then
-          errorMessage := ERR_MSG_CUSTOMER_ORDER_DETAIL_ID_INVALID;    
+          errorMessage := ERR_MSG_CUSTOMER_ORDER_DETAIL_ID_INVALID;
+      when ERR_CODE_CUSTOMER_PRODUCT_IS_FAVORITE_INVALID then
+          errorMessage := ERR_MSG_CUSTOMER_PRODUCT_IS_FAVORITE_INVALID;
+      when ERR_CODE_CUSTOMER_PRODUCT_FAVORITE_INSERT then
+          errorMessage := ERR_MSG_CUSTOMER_PRODUCT_FAVORITE_INSERT;
+      when ERR_CODE_CUSTOMER_PRODUCT_FAVORITE_NOT_FOUND_FOR_UPDATE then
+          errorMessage := ERR_MSG_CUSTOMER_PRODUCT_FAVORITE_NOT_FOUND_FOR_UPDATE;      
 
       else
           errorMessage := ERR_MSG_OTHERS || sqlerrm;          

@@ -42,12 +42,8 @@ create or replace noneditionable package ecpValidate_pkg is
   procedure customerOrderDetailParameters(p_customerOrderDetailId in number default null,
                                           p_productQuantity       in number default null,
                                           p_productUnitPrice      in number default null);                                                          
-  -- Name                   Type          
-  -- CUSTOMERORDERDETAILID  NUMBER(25)                    
-                       
-  -- QUANTITY               NUMBER(10)                       
-  -- UNITPRICE              NUMBER(11,2)
-  
+
+  procedure customerProductFavoriteParameters(p_isFavorite in number default null);
 
 
 end ecpValidate_pkg;
@@ -334,7 +330,16 @@ create or replace noneditionable package body ecpValidate_pkg is
         end if;
       end if;      
     end;                                                          
-                
+    
+    procedure customerProductFavoriteParameters(p_isFavorite in number default null) is
+    begin
+       -- isFavorite'nin degerini kontrol eder.
+      if p_isFavorite is not null then
+        if p_isFavorite not in (0,1) then
+          ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_CUSTOMER_PRODUCT_IS_FAVORITE_INVALID);
+        end if;
+      end if;
+    end;            
                   
 
 end ecpValidate_pkg;
