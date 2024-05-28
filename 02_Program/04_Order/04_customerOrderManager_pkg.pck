@@ -22,7 +22,12 @@ create or replace noneditionable package body customerOrderManager_pkg is
   begin
     v_customerOrderId := customerOrder_seq.nextval;
     v_orderNo         := orderNo_seq.nextval;
-  
+    
+    -- Parametre kontrolu yapilir.
+    ecpValidate_pkg.customerOrderParameters(p_customerOrderId => v_customerOrderId,
+                                            p_orderNo => v_orderNo);
+   
+    -- Siparis numarasý olusturulur.
     insert into customerOrder
       (customerorderid,
        customerid,
@@ -40,27 +45,43 @@ create or replace noneditionable package body customerOrderManager_pkg is
        1,
        p_deliveryAddressId);
     return v_customerOrderId;
+    
+    exception
+    when dup_val_on_index then
+      rollback;
+      ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_CUSTOMER_ORDER_NO_DUPLICATE);       
+    when others then
+      rollback;
+      ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_OTHERS);
+    
   end;
 
   procedure updateTotalPriceToCustomerOrder(p_customerOrderId customerorder.customerid%type,
                                             p_totalPrice      customerorder.totalprice%type) is
   begin
+    -- Parametre kontrolu yapilir.
+    ecpValidate_pkg.customerOrderParameters(p_customerOrderId =>  p_customerOrderId,
+                                            p_totalPrice =>  p_totalPrice);
+  
+    -- Siparisin toplam tutarini gunceller.
     update customerorder co
        set co.totalprice = p_totalPrice
      where co.customerorderid = p_customerOrderId;
+    -- Guncellenecek musteri siparisi bulunamazsa hata verir.
+     if sql%notfound then
+        rollback;
+        ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_CUSTOMER_ORDER_NOT_FOUND_FOR_UPDATE);
+     end if;   
   
   exception
-    when no_data_found then
-      raise_application_error(-20100, 'Uygun siparis bulunamadý');
     when others then
-      raise_application_error(-20105,
-                              'Beklenmeyen bir hata olustu. Hata kodu: ' ||
-                              sqlerrm);
+      ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_OTHERS);
   end;
 
   function getCustomerOrderList(p_customerId customerOrder.customerid%type)
     return getCustomerOrderList_type is
   
+    -- Musteriye ait siparisleri getirir.
     cursor c_customerOrder(cp_customerId customerorder.customerid%type) is
       select co.customerorderid customerOrderId,
              co.orderno orderNo,
@@ -89,7 +110,8 @@ create or replace noneditionable package body customerOrderManager_pkg is
          and city.countryid = country.countryid
          and da.phoneid = p.phoneid
          and co.customerid = cp_customerId;
-  
+         
+    -- Musteriye ait siparislerin icerisindeki urunleri getirir.
     cursor c_customerOrderDetail(cp_customerOrderId customerorderdetail.customerorderid%type) is
       select b.brandname   brandName,
              p.productname productName,
@@ -106,11 +128,14 @@ create or replace noneditionable package body customerOrderManager_pkg is
     v_index_customerOrderList       pls_integer := 0;
     v_index_customerOrderDetailList pls_integer := 0;
   begin
-  
+    -- Parametre kontrolu
+    ecpValidate_pkg.customerParameters(p_customerId => p_customerId);
+   
+    -- Siparis listesini olusturur ve siparis icerisindeki urunleri listeye ekler.
     for r_customerOrder in c_customerOrder(p_customerId) loop
     
       for r_customerOrderDetail in c_customerOrderDetail(r_customerOrder.customerorderid) loop
-      
+        -- Siparise ait urun listesi
         v_customerOrderDetailList.extend;
         v_index_customerOrderDetailList := v_index_customerOrderDetailList + 1;
       
@@ -123,7 +148,7 @@ create or replace noneditionable package body customerOrderManager_pkg is
     
       v_customerOrderList.extend;
       v_index_customerOrderList := v_index_customerOrderList + 1;
-    
+      -- Siparisin detaylari
       v_customerOrderList(v_index_customerOrderList) := getCustomerOrder_type(orderNo               => r_customerOrder.orderNo,
                                                                               orderDate             => r_customerOrder.orderDate,
                                                                               totalPrice            => r_customerOrder.totalPrice,
@@ -139,6 +164,10 @@ create or replace noneditionable package body customerOrderManager_pkg is
   
     return v_customerOrderList;
   
+  exception    
+    when others then
+      rollback;
+      ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_OTHERS);
   end;
 
 end customerOrderManager_pkg;

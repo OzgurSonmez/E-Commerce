@@ -34,6 +34,12 @@ create or replace noneditionable package ecpValidate_pkg is
                                     p_productQuantity in number default null,
                                     p_isSelected      in number default null);                  
   
+  procedure customerOrderParameters(p_customerOrderId in number default null,
+                                    p_orderNo         in varchar2 default null,
+                                    p_orderDate       in date default null,
+                                    p_totalPrice      in number default null);
+                                    
+
 
 
 end ecpValidate_pkg;
@@ -267,7 +273,43 @@ create or replace noneditionable package body ecpValidate_pkg is
       end if;
       
     end;                      
-                              
+    
+    procedure customerOrderParameters(p_customerOrderId in number default null,
+                                      p_orderNo         in varchar2 default null,
+                                      p_orderDate       in date default null,
+                                      p_totalPrice      in number default null) is
+    begin
+       -- CustomerOrderId'yi kontrol eder.
+      if p_customerOrderId is not null then
+        if (p_customerOrderId < 0 or p_customerOrderId > 99999999999999999999999) then
+           ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_CUSTOMER_ORDER_ID_INVALID);
+        end if;
+      end if;
+      -- Order No'nun uzunlugunu kontrol eder.
+      if p_orderNo is not null then
+         if length(p_orderNo) > 30 then
+           ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_CUSTOMER_ORDER_NO_TOO_LONG);
+         end if;  
+      end if;
+       -- Order Date'yi kontrol eder.
+      if p_orderDate is not null then
+        null;
+      end if;
+      -- Total price'i kontrol eder.
+      if p_totalPrice is not null then
+        if (p_totalPrice < 0 or p_totalPrice> 99999999999999999999999) then
+           ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_TOTAL_PRICE_INVALID);
+        end if;
+      end if;
+    end;                          
+
+
+
+                     
+                      
+-- ORDERNO            VARCHAR2(30)                     
+-- ORDERDATE          DATE                             
+-- TOTALPRICE         NUMBER(12,2)                     
 
 end ecpValidate_pkg;
 /

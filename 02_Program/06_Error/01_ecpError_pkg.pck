@@ -16,6 +16,8 @@ create or replace noneditionable package ecpError_pkg is
   ERR_CODE_PRODUCT_NOT_FOUND_FROM_BASKET_FOR_UPDATE CONSTANT NUMBER := -20112;
   ERR_CODE_PRODUCT_NOT_FOUND_IN_BASKET CONSTANT NUMBER := -20113;
   ERR_CODE_PRODUCT_TOO_MANY_ROWS_IN_BASKET CONSTANT NUMBER := -20114;
+  ERR_CODE_CUSTOMER_ORDER_NO_DUPLICATE CONSTANT NUMBER := -20115;
+  ERR_CODE_CUSTOMER_ORDER_NOT_FOUND_FOR_UPDATE CONSTANT NUMBER := -20116;
   
   -- Hata mesajlari --------------
   ERR_MSG_OTHERS CONSTANT VARCHAR2(100) := 'Beklenmedik bir hata olustu. '; 
@@ -33,6 +35,8 @@ create or replace noneditionable package ecpError_pkg is
   ERR_MSG_PRODUCT_NOT_FOUND_FROM_BASKET_FOR_UPDATE CONSTANT VARCHAR2(100) := 'Guncellenecek urun sepette bulunamadi';
   ERR_MSG_PRODUCT_NOT_FOUND_IN_BASKET CONSTANT VARCHAR2(100) := 'Bu urun sepette bulunamadi.';
   ERR_MSG_PRODUCT_TOO_MANY_ROWS_IN_BASKET CONSTANT VARCHAR2(100) := 'Ayni sepete ait birden fazla ayný urun bulundu.';
+  ERR_MSG_CUSTOMER_ORDER_NO_DUPLICATE CONSTANT VARCHAR2(100) := 'Bu siparis numarasi zaten kayitli.';
+  ERR_MSG_CUSTOMER_ORDER_NOT_FOUND_FOR_UPDATE CONSTANT VARCHAR2(100) := 'Guncellenecek musteri siparisi bulunamadi';
   
   -- Validasyon hata kodlari --------------
   -- Email
@@ -69,7 +73,11 @@ create or replace noneditionable package ecpError_pkg is
   ERR_CODE_BASKET_PRODUCT_ID_INVALID CONSTANT NUMBER := -20524;
   ERR_CODE_PRODUCT_QUANTITY_INVALID CONSTANT NUMBER := -20525;
   ERR_CODE_BASKET_PRODUCT_IS_SELECTED_INVALID CONSTANT NUMBER := -20526;
-  
+  -- CustomerOrder
+  ERR_CODE_CUSTOMER_ORDER_ID_INVALID CONSTANT NUMBER := -20527;
+  ERR_CODE_CUSTOMER_ORDER_NO_TOO_LONG CONSTANT NUMBER := -20528;
+  ERR_CODE_TOTAL_PRICE_INVALID CONSTANT NUMBER := -20529;
+   
   -- Validasyon hata mesajlari --------------
   -- Email
   ERR_MSG_EMAIL_ID_INVALID CONSTANT VARCHAR2(100) := 'Gecersiz Email Id.';
@@ -105,7 +113,11 @@ create or replace noneditionable package ecpError_pkg is
   ERR_MSG_BASKET_PRODUCT_ID_INVALID CONSTANT VARCHAR2(100) := 'Gecersiz SepetUrun Id.(BasketProductID)';
   ERR_MSG_PRODUCT_QUANTITY_INVALID CONSTANT VARCHAR2(100) := 'Gecersiz urun adedi.';
   ERR_MSG_BASKET_PRODUCT_IS_SELECTED_INVALID CONSTANT VARCHAR2(100) := 'Gecersiz urun secim durumu.';
-  
+  -- CustomerOrder
+  ERR_MSG_CUSTOMER_ORDER_ID_INVALID CONSTANT VARCHAR2(100) := 'Gecersiz musteri siparis Id';
+  ERR_MSG_CUSTOMER_ORDER_NO_TOO_LONG CONSTANT VARCHAR2(100) := 'Musteri siparis numarasi cok uzun.';
+  ERR_MSG_TOTAL_PRICE_INVALID CONSTANT VARCHAR2(100) := 'Gecersiz toplam siparis tutari';
+
   ------------------------------------------------------------------------------------
   procedure raiseError(p_ecpErrorCode in number);
 
@@ -202,6 +214,17 @@ create or replace noneditionable package body ecpError_pkg is
           errorMessage := ERR_MSG_PRODUCT_NOT_FOUND_IN_BASKET;     
       when ERR_CODE_PRODUCT_TOO_MANY_ROWS_IN_BASKET then
           errorMessage := ERR_MSG_PRODUCT_TOO_MANY_ROWS_IN_BASKET;    
+      when ERR_CODE_CUSTOMER_ORDER_ID_INVALID then
+          errorMessage := ERR_MSG_CUSTOMER_ORDER_ID_INVALID;
+      when ERR_CODE_CUSTOMER_ORDER_NO_TOO_LONG then
+          errorMessage := ERR_MSG_CUSTOMER_ORDER_NO_TOO_LONG;
+      when ERR_CODE_TOTAL_PRICE_INVALID then
+          errorMessage := ERR_CODE_TOTAL_PRICE_INVALID;
+      when ERR_CODE_CUSTOMER_ORDER_NO_DUPLICATE then
+          errorMessage := ERR_MSG_CUSTOMER_ORDER_NO_DUPLICATE;
+      when ERR_CODE_CUSTOMER_ORDER_NOT_FOUND_FOR_UPDATE then
+          errorMessage := ERR_MSG_CUSTOMER_ORDER_NOT_FOUND_FOR_UPDATE;      
+
 
       else
           errorMessage := ERR_MSG_OTHERS || sqlerrm;          
