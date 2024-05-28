@@ -3,20 +3,30 @@ create or replace package ecpValidate_pkg is
   procedure emailParameters(p_emailId      in number default null,
                             p_emailAddress in varchar2 default null);
                             
-  procedure customerParameters(p_customerId     in number default null,
-                               p_firstName      in varchar2 default null,
-                               p_lastName       in varchar2 default null,
-                               p_birthDate      in date default null,
-                               p_passwordHash   in varchar2 default null,
-                               p_passwordSalt   in varchar2 default null,
-                               p_identityTypeId in number default null,
-                               p_identityNumber in varchar default null,
-                               p_genderId       in number default null,
-                               p_defaultPhoneId in number default null,
-                               p_emailId        in number default null,
-                               p_defaultDeliveryAddressId in number default null,
+  procedure customerParameters(p_customerId      in number default null,
+                               p_firstName       in varchar2 default null,
+                               p_lastName        in varchar2 default null,
+                               p_birthDate       in date default null,
+                               p_passwordHash    in varchar2 default null,
+                               p_passwordSalt    in varchar2 default null,
+                               p_identityNumber  in varchar default null,
                                p_isAccountActive in number default null);             
   
+  procedure productParameters(p_productId          in number default null,
+                              p_productName        in varchar2 default null,
+                              p_productDescription in varchar2 default null,
+                              p_price              in number default null,
+                              p_discountPercentage in number default null,
+                              p_favCount           in number default null);
+  
+  procedure brandParameters(p_brandId   in number default null,
+                            p_brandName in varchar2 default null);
+                              
+
+  procedure categoryParameters(p_categoryId        in number default null,
+                               p_categoryName      in varchar2 default null,
+                               p_parentCategoryId  in number default null);                      
+ 
 
 end ecpValidate_pkg;
 /
@@ -49,13 +59,8 @@ create or replace package body ecpValidate_pkg is
                                  p_lastName       in varchar2 default null,
                                  p_birthDate      in date default null,
                                  p_passwordHash   in varchar2 default null,
-                                 p_passwordSalt   in varchar2 default null,
-                                 p_identityTypeId in number default null,
+                                 p_passwordSalt   in varchar2 default null,              
                                  p_identityNumber in varchar default null,
-                                 p_genderId       in number default null,
-                                 p_defaultPhoneId in number default null,
-                                 p_emailId        in number default null,
-                                 p_defaultDeliveryAddressId in number default null,
                                  p_isAccountActive in number default null)  is
     begin
       
@@ -98,14 +103,8 @@ create or replace package body ecpValidate_pkg is
          if length(p_passwordSalt) > 255 then
            ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_CUSTOMER_PASSWORD_SALT_TOO_LONG);
          end if;  
-      end if;
-      
-      -- IdentityTypeId'yi kontrol eder.
-      if p_identityTypeId is not null then
-         if p_identityTypeId < 0 or p_identityTypeId > 999 then
-           ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_IDENTITY_TYPE_ID_INVALID);
-         end if;  
-      end if;
+      end if;      
+
       
       -- IdentityNumber'in uzunlugunu kontrol eder.
       if p_identityNumber is not null then
@@ -124,6 +123,107 @@ create or replace package body ecpValidate_pkg is
     
     end; 
      
+
+    procedure productParameters(p_productId          in number default null,
+                                p_productName        in varchar2 default null,
+                                p_productDescription in varchar2 default null,
+                                p_price              in number default null,
+                                p_discountPercentage in number default null,
+                                p_favCount           in number default null) is
+    begin
+      -- ProductId'yi kontrol eder.
+      if p_productId is not null then
+        if (p_productId < 0 or p_productId > 99999999999999999999) then
+           ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_PRODUCT_ID_INVALID);
+        end if;
+      end if;
+      
+      -- ProductName'in uzunlugunu kontrol eder.
+      if p_productName is not null then
+         if length(p_productName) > 100 then
+           ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_PRODUCT_NAME_TOO_LONG);
+         end if;  
+      end if;
+      
+      -- Product Description'in uzunlugunu kontrol eder.
+      if p_productDescription is not null then
+         if length(p_productDescription) > 2000 then
+           ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_PRODUCT_DESCRIPTION_TOO_LONG);
+         end if;  
+      end if;
+      
+      -- Product Price'i kontrol eder.
+      if p_price is not null then
+        if (p_price < 0 or p_price > 99999999999999999999) then
+           ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_PRODUCT_PRICE_INVALID);
+        end if;
+      end if;
+      
+      -- Product Discount Percentage'i kontrol eder.
+      if p_discountPercentage is not null then
+        if (p_discountPercentage < 0 or p_discountPercentage > 100) then
+           ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_PRODUCT_DISCOUNT_PERCENTAGE_INVALID);
+        end if;
+      end if;
+      
+      -- Favorite Count'u kontrol eder.
+      if p_favCount is not null then
+        if (p_favCount < 0 or p_favCount > 99999999999999999999) then
+           ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_PRODUCT_FAVORITE_COUNT_INVALID);
+        end if;
+      end if;  
+      
+      
+      
+    end;  
+    
+    
+    procedure brandParameters(p_brandId     in number default null,
+                              p_brandName   in varchar2 default null) is
+    begin
+      -- BrandId'yi kontrol eder.
+      if p_brandId is not null then
+        if (p_brandId < 0 or p_brandId > 9999999999) then
+           ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_BRAND_ID_INVALID);
+        end if;
+      end if;
+      
+      -- Brand Name'in uzunlugunu kontrol eder.
+      if p_brandName is not null then
+         if length(p_brandName) > 100 then
+           ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_BRAND_NAME_TOO_LONG);
+         end if;  
+      end if;
+      
+    end;
+    
+    
+    procedure categoryParameters(p_categoryId        in number default null,
+                                 p_categoryName      in varchar2 default null,
+                                 p_parentCategoryId  in number default null) is
+    begin
+      -- CategoryId'yi kontrol eder.
+      if p_categoryId is not null then
+        if (p_categoryId < 0 or p_categoryId > 99999999) then
+           ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_CATEGORY_ID_INVALID);
+        end if;
+      end if;
+      
+      -- Category Name'in uzunlugunu kontrol eder.
+      if p_categoryName is not null then
+         if length(p_categoryName) > 100 then
+           ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_CATEGORY_NAME_TOO_LONG);
+         end if;  
+      end if;
+      
+      -- ParentCategoryId'yi kontrol eder.
+      if p_parentCategoryId is not null then
+        if (p_parentCategoryId < 0 or p_parentCategoryId > 99999999) then
+           ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_PARENT_CATEGORY_ID_INVALID);
+        end if;
+      end if;
+   
+    end;                             
 
 end ecpValidate_pkg;
 /

@@ -16,15 +16,20 @@ create or replace noneditionable package body productManager_pkg is
 
   procedure addProduct(p_addProduct in addProduct_type) is
     v_productId product.productid%type;
-  begin
-    if (p_addProduct.discountPercentange < 0 or
-       p_addProduct.discountPercentange > 100) then
-      raise_application_error(-20107,
-                              'Ýndirim oraný 0 ile 101 arasýnda olmalýdýr.');
-    end if;
-  
+  begin 
+
     v_productId := product_seq.nextval;
-  
+    
+    -- Parametre kontrolu yapilir.
+    ecpValidate_pkg.brandParameters(p_brandId => p_addProduct.brandId);
+    ecpValidate_pkg.productParameters(p_productId => v_productId,
+                                      p_productName => p_addProduct.productName,
+                                      p_productDescription => p_addProduct.productDescription,
+                                      p_price => p_addProduct.price,
+                                      p_discountPercentage => p_addProduct.discountPercentange);                            
+    ecpValidate_pkg.categoryParameters(p_categoryId => p_addProduct.categoryId);                                  
+                                       
+    -- Urun eklenir.
     insert into product
       (productid,
        brandid,
@@ -41,41 +46,41 @@ create or replace noneditionable package body productManager_pkg is
        p_addProduct.price,
        NVL(p_addProduct.discountPercentange, 0),
        0);
-  
+    
+    -- Urun bir kategoriye eklenir.
     productCategoryManager_pkg.addProductCategory(p_productId  => v_productId,
                                                   p_categoryId => p_addProduct.categoryId);
   
     commit;
   
   exception
-    when value_error then
-      rollback;
-      raise_application_error(-20101, 'Geçersiz veri hatasý.');
     when others then
       rollback;
-      raise_application_error(-20105,
-                              'Beklenmeyen bir hata olustu. Hata kodu: ' ||
-                              sqlerrm);
-    
+      ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_OTHERS);    
   end;
+  
 
   procedure deleteProduct(p_productId product.productid%type) is
   begin
-  
+    -- Parametre kontrolu yapilir.
+    ecpValidate_pkg.productParameters(p_productId => p_productId);
+    
+    -- Urunu silmeden once kategoriye bagliligi kaldirilir.
     productCategoryManager_pkg.deleteProductCategoryByProductId(p_productId => p_productId);
+    
+    -- Urun silinir.
     delete product p where p.productid = p_productId;
   
-    if (sql%rowcount = 0) then
-      raise_application_error(-20101, 'Silinecek ürün bulunamadý.');
+    -- Silinen bir urun yoksa hata uret.
+    if (sql%rowcount = 0) then      
+      ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_PRODUCT_NOT_FOUND_TO_DELETE);
     end if;
   
     commit;
   exception
     when others then
       rollback;
-      raise_application_error(-20105,
-                              'Beklenmeyen bir hata olustu. Hata kodu: ' ||
-                              sqlerrm);
+      ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_OTHERS); 
   end;
 
   procedure filterProduct(p_filterProduct in filterProduct_type) is
@@ -93,6 +98,13 @@ create or replace noneditionable package body productManager_pkg is
     v_rec_product rec_product;
   
   BEGIN
+    -- parametre kontrolu yapilir.
+    ecpValidate_pkg.categoryParameters(p_categoryId => p_filterProduct.categoryId);
+    ecpValidate_pkg.brandParameters(p_brandId => p_filterProduct.brandId);
+    ecpValidate_pkg.productParameters(p_productName => p_filterProduct.productName,
+                                      p_price => p_filterProduct.minPrice);
+    ecpValidate_pkg.productParameters(p_price => p_filterProduct.maxPrice); 
+  
     -- recursiveCategory sorgusu parametreden gelen categoryId'nin alt kategorileri döner.
     -- categoryId null deðer gelirse tüm kategorileri döner.
     -- parametreden gelebilecek diðer filtrelerin null durumu kontrol edilerek where kosuluna eklenmistir.
@@ -142,6 +154,7 @@ create or replace noneditionable package body productManager_pkg is
       v_query := v_query || 'asc ';
     end if;
   
+    -- Dinamik sorguyu calistirmak icin cursor acilir.
     open v_cursor for v_query
       using p_filterProduct.categoryId,
             p_filterProduct.categoryId,
@@ -155,6 +168,7 @@ create or replace noneditionable package body productManager_pkg is
             p_filterProduct.maxPrice,
             p_filterProduct.maxPrice;
   
+    -- Cursor'daki sonuclar islenir.
     loop
       fetch v_cursor
         into v_rec_product;
@@ -175,9 +189,7 @@ create or replace noneditionable package body productManager_pkg is
       if v_cursor%isopen then
         close v_cursor;
       end if;
-      raise_application_error(-20105,
-                              'Urünleri listelerken beklenmedik bir hata olustu. Hata kodu: ' ||
-                              sqlerrm);
+      ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_OTHERS);
   END;
 
   procedure increaseProductFavoriteCount(p_productId product.productid%type) is
@@ -198,9 +210,8 @@ create or replace noneditionable package body productManager_pkg is
              set p.favcount = v_currentProductFavoriteCount + 1
              where current of c_productFavoriteCount;
     else
-      rollback;
-      raise_application_error(-20117,
-                              'Belirtilen productId ile eslesen urun bulunamadi.');
+      rollback;      
+      ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_PRODUCT_NOT_FOUND);
     end if;
   
     close c_productFavoriteCount;
@@ -211,9 +222,7 @@ create or replace noneditionable package body productManager_pkg is
           close c_productFavoriteCount;          
         end if;
         rollback;
-        raise_application_error(-20105,
-                              'Beklenmedik bir hata olustu. Hata kodu: ' ||
-                              sqlerrm);
+        ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_OTHERS);
   end;
   
   
@@ -237,8 +246,7 @@ create or replace noneditionable package body productManager_pkg is
              where current of c_productFavoriteCount;
     else
       rollback;
-      raise_application_error(-20117,
-                              'Belirtilen productId ile eslesen urun bulunamadi.');
+      ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_PRODUCT_NOT_FOUND);
     end if;
     close c_productFavoriteCount; 
     
@@ -248,9 +256,7 @@ create or replace noneditionable package body productManager_pkg is
           close c_productFavoriteCount;          
         end if;
         rollback;
-        raise_application_error(-20105,
-                              'Beklenmedik bir hata olustu. Hata kodu: ' ||
-                              sqlerrm);
+        ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_OTHERS);
   end;
 
 end productManager_pkg;

@@ -8,6 +8,8 @@ create or replace noneditionable package ecpError_pkg is
   ERR_CODE_CUSTOMER_DUPLICATE CONSTANT NUMBER := -20104;
   ERR_CODE_CUSTOMER_PASSWORD_NOT_FOUND CONSTANT NUMBER := -20105;
   ERR_CODE_CUSTOMER_NOT_FOUND CONSTANT NUMBER := -20106;
+  ERR_CODE_PRODUCT_NOT_FOUND_TO_DELETE CONSTANT NUMBER := -20107;
+  ERR_CODE_PRODUCT_NOT_FOUND CONSTANT NUMBER := -20108;
   
   -- Hata mesajlari --------------
   ERR_MSG_OTHERS CONSTANT VARCHAR2(100) := 'Beklenmedik bir hata olustu. '; 
@@ -17,6 +19,8 @@ create or replace noneditionable package ecpError_pkg is
   ERR_MSG_CUSTOMER_DUPLICATE CONSTANT VARCHAR2(100) := 'Musteri tablosunda benzersiz anahtar veya indeks hatasi.';
   ERR_MSG_CUSTOMER_PASSWORD_NOT_FOUND CONSTANT VARCHAR2(100) := 'Musteri hash veya salt parolasi bulunamadi.';
   ERR_MSG_CUSTOMER_NOT_FOUND CONSTANT VARCHAR2(100) := 'Musteri bulunamadi';
+  ERR_MSG_PRODUCT_NOT_FOUND_TO_DELETE CONSTANT VARCHAR2(100) := 'Silinecek urun bulunamadi';
+  ERR_MSG_PRODUCT_NOT_FOUND CONSTANT VARCHAR2(100) := 'Urun bulunamadi';
   
   -- Validasyon hata kodlari --------------
   -- Email
@@ -33,6 +37,20 @@ create or replace noneditionable package ecpError_pkg is
   ERR_CODE_IDENTITY_TYPE_ID_INVALID CONSTANT NUMBER := -20510;
   ERR_CODE_IDENTITY_NUMBER_TOO_LONG CONSTANT NUMBER := -20511;
   ERR_CODE_GENDER_ID_INVALID CONSTANT NUMBER := -20512;
+  -- Product
+  ERR_CODE_PRODUCT_ID_INVALID CONSTANT NUMBER := -20513;
+  ERR_CODE_PRODUCT_NAME_TOO_LONG CONSTANT NUMBER := -20514;
+  ERR_CODE_PRODUCT_DESCRIPTION_TOO_LONG CONSTANT NUMBER := -20515;
+  ERR_CODE_PRODUCT_PRICE_INVALID CONSTANT NUMBER := -20516;
+  ERR_CODE_PRODUCT_DISCOUNT_PERCENTAGE_INVALID CONSTANT NUMBER := -20517;
+  ERR_CODE_PRODUCT_FAVORITE_COUNT_INVALID CONSTANT NUMBER := -20518;
+  -- Brand
+  ERR_CODE_BRAND_ID_INVALID CONSTANT NUMBER := -20518;
+  ERR_CODE_BRAND_NAME_TOO_LONG CONSTANT NUMBER := -20519;
+  -- Category
+  ERR_CODE_CATEGORY_ID_INVALID CONSTANT NUMBER := -20520;
+  ERR_CODE_CATEGORY_NAME_TOO_LONG CONSTANT NUMBER := -20521;
+  ERR_CODE_PARENT_CATEGORY_ID_INVALID CONSTANT NUMBER := -20522;
   
   -- Validasyon hata mesajlari --------------
   -- Email
@@ -49,7 +67,22 @@ create or replace noneditionable package ecpError_pkg is
   ERR_MSG_IDENTITY_TYPE_ID_INVALID CONSTANT VARCHAR2(100) := 'Gecersiz Kimlik Tipi Id.';
   ERR_MSG_IDENTITY_NUMBER_TOO_LONG CONSTANT VARCHAR2(100) := 'Kimlik numarasi cok uzun.';
   ERR_MSG_GENDER_ID_INVALID CONSTANT VARCHAR2(100) := 'Gecersiz Cinsiyet Id.';
+  -- Product
+  ERR_MSG_PRODUCT_ID_INVALID CONSTANT VARCHAR2(100) := 'Gecersiz Urun Id.';
+  ERR_MSG_PRODUCT_NAME_TOO_LONG CONSTANT VARCHAR2(100) := 'Urun ismi cok uzun.';
+  ERR_MSG_PRODUCT_DESCRIPTION_TOO_LONG CONSTANT VARCHAR2(100) := 'Urun aciklamasi cok uzun.';
+  ERR_MSG_PRODUCT_PRICE_INVALID CONSTANT VARCHAR2(100) := 'Gecersiz urun fiyati.';
+  ERR_MSG_PRODUCT_DISCOUNT_PERCENTAGE_INVALID CONSTANT VARCHAR2(100) := 'Gecersiz indirim yuzdesi.';
+  ERR_MSG_PRODUCT_FAVORITE_COUNT_INVALID CONSTANT VARCHAR2(100) := 'Gecersiz favori sayisi.';
+  -- Brand
+  ERR_MSG_BRAND_ID_INVALID CONSTANT VARCHAR2(100) := 'Gecersiz Marka Id.';
+  ERR_MSG_BRAND_NAME_TOO_LONG CONSTANT VARCHAR2(100) := 'Urun ismi cok uzun.';
+  -- Category
+  ERR_MSG_CATEGORY_ID_INVALID CONSTANT VARCHAR2(100) := 'Gecersiz Kategori Id.';
+  ERR_MSG_CATEGORY_NAME_TOO_LONG CONSTANT VARCHAR2(100) := 'Kategori ismi cok uzun.';
+  ERR_MSG_PARENT_CATEGORY_ID_INVALID CONSTANT VARCHAR2(100) := 'Gecersiz Ebeveyn Kategori Id.';
   
+  ------------------------------------------------------------------------------------
   procedure raiseError(p_ecpErrorCode in number);
 
 end ecpError_pkg;
@@ -99,11 +132,33 @@ create or replace noneditionable package body ecpError_pkg is
           errorMessage := ERR_MSG_CUSTOMER_PASSWORD_NOT_FOUND;    
       when ERR_CODE_CUSTOMER_NOT_FOUND then
           errorMessage := ERR_MSG_CUSTOMER_NOT_FOUND;    
-      
-      
-      
-  
-          
+      when ERR_CODE_PRODUCT_ID_INVALID then
+          errorMessage := ERR_MSG_PRODUCT_ID_INVALID;
+      when ERR_CODE_PRODUCT_NAME_TOO_LONG then
+          errorMessage := ERR_MSG_PRODUCT_NAME_TOO_LONG;
+      when ERR_CODE_PRODUCT_DESCRIPTION_TOO_LONG then
+          errorMessage := ERR_MSG_PRODUCT_DESCRIPTION_TOO_LONG;
+      when ERR_CODE_PRODUCT_PRICE_INVALID then
+          errorMessage := ERR_MSG_PRODUCT_PRICE_INVALID;        
+      when ERR_CODE_PRODUCT_DISCOUNT_PERCENTAGE_INVALID then
+          errorMessage := ERR_MSG_PRODUCT_DISCOUNT_PERCENTAGE_INVALID;
+      when ERR_CODE_PRODUCT_FAVORITE_COUNT_INVALID then
+          errorMessage := ERR_MSG_PRODUCT_FAVORITE_COUNT_INVALID;
+      when ERR_CODE_BRAND_ID_INVALID then
+          errorMessage := ERR_MSG_BRAND_ID_INVALID;
+      when ERR_CODE_BRAND_NAME_TOO_LONG then
+          errorMessage := ERR_MSG_BRAND_NAME_TOO_LONG;
+      when ERR_CODE_CATEGORY_ID_INVALID then
+          errorMessage := ERR_MSG_CATEGORY_ID_INVALID;
+      when ERR_CODE_CATEGORY_NAME_TOO_LONG then
+          errorMessage := ERR_MSG_CATEGORY_NAME_TOO_LONG;    
+      when ERR_CODE_PARENT_CATEGORY_ID_INVALID then
+          errorMessage := ERR_MSG_PARENT_CATEGORY_ID_INVALID;
+      when ERR_CODE_PRODUCT_NOT_FOUND_TO_DELETE then
+          errorMessage := ERR_MSG_PRODUCT_NOT_FOUND_TO_DELETE; 
+      when ERR_CODE_PRODUCT_NOT_FOUND then
+          errorMessage := ERR_MSG_PRODUCT_NOT_FOUND;        
+
       else
           errorMessage := ERR_MSG_OTHERS || sqlerrm;          
     end case;
