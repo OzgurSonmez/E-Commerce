@@ -1,4 +1,4 @@
-create or replace package ecpValidate_pkg is
+create or replace noneditionable package ecpValidate_pkg is
 
   procedure emailParameters(p_emailId      in number default null,
                             p_emailAddress in varchar2 default null);
@@ -25,12 +25,14 @@ create or replace package ecpValidate_pkg is
 
   procedure categoryParameters(p_categoryId        in number default null,
                                p_categoryName      in varchar2 default null,
-                               p_parentCategoryId  in number default null);                      
- 
+                               p_parentCategoryId  in number default null);  
+                               
+                                                   
+  procedure basketParameters(p_basketId in number default null);
 
 end ecpValidate_pkg;
 /
-create or replace package body ecpValidate_pkg is
+create or replace noneditionable package body ecpValidate_pkg is
 
     procedure emailParameters(p_emailId      in number default null,
                               p_emailAddress in varchar2 default null) is
@@ -223,6 +225,16 @@ create or replace package body ecpValidate_pkg is
         end if;
       end if;
    
+    end;
+    
+    procedure basketParameters(p_basketId in number default null) is
+    begin
+       -- BasketId'yi kontrol eder.
+      if p_basketId is not null then
+        if (p_basketId < 0 or p_basketId > 99999999999999999999) then
+           ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_BASKET_ID_INVALID);
+        end if;
+      end if;
     end;                             
 
 end ecpValidate_pkg;
