@@ -33,13 +33,7 @@ create or replace noneditionable package body customerProductFavoriteManager_pkg
        -- Urun daha once hic favoriye alinmadiysa tabloya kayit eklenir.
        if c_customerProductFavorite%notfound then
          insert into customerproductfavorite(customerid, productid, isfavorite)
-                values(p_customerId, p_productId, v_isFavorite);
-         -- Kayit eklenemediginde hata verir.
-         if sql%notfound then
-           close c_customerProductFavorite;
-           rollback;
-           ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_CUSTOMER_PRODUCT_FAVORITE_INSERT);
-         end if;
+                values(p_customerId, p_productId, v_isFavorite);      
          
          -- Urunun favori sayisini artirir.
          productManager_pkg.increaseProductFavoriteCount(p_productId => p_productId);

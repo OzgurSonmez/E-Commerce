@@ -56,7 +56,7 @@ create or replace noneditionable package body productManager_pkg is
   exception
     when others then
       rollback;
-      ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_OTHERS);    
+      ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_PRODUCT_INSERT);    
   end;
   
 
@@ -209,7 +209,15 @@ create or replace noneditionable package body productManager_pkg is
       update product p 
              set p.favcount = v_currentProductFavoriteCount + 1
              where current of c_productFavoriteCount;
+             
+      -- Urunun favori sayisi degismezse hata verir.
+      if sql%notfound then
+        close c_productFavoriteCount;
+        rollback;
+        ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_PRODUCT_FAVORITE_COUNT_FOR_UPDATE);
+      end if;
     else
+      close c_productFavoriteCount;
       rollback;      
       ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_PRODUCT_NOT_FOUND);
     end if;
@@ -244,7 +252,14 @@ create or replace noneditionable package body productManager_pkg is
       update product p 
              set p.favcount = v_currentProductFavoriteCount - 1
              where current of c_productFavoriteCount;
+      -- Urunun favori sayisi degismezse hata verir.
+      if sql%notfound then
+        close c_productFavoriteCount;
+        rollback;
+        ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_PRODUCT_FAVORITE_COUNT_FOR_UPDATE);
+      end if;
     else
+      close c_productFavoriteCount;
       rollback;
       ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_PRODUCT_NOT_FOUND);
     end if;

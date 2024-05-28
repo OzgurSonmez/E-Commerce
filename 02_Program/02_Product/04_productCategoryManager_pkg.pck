@@ -21,19 +21,13 @@ create or replace noneditionable package body productCategoryManager_pkg is
       (productid, categoryid)
     values
       (p_productId, p_categoryId);
-  
-    -- Kayit eklenemediginde hata verir.
-    if sql%notfound then
-      rollback;
-      ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_PRODUCT_CATEGORY_INSERT);
-    end if;
-  
+
     commit;
-  
+    -- Kayit eklenemediginde hata verir. 
   exception
     when others then
       rollback;
-      ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_OTHERS);
+      ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_PRODUCT_CATEGORY_INSERT);
     
   end;
 

@@ -52,7 +52,7 @@ create or replace noneditionable package body customerOrderManager_pkg is
       ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_CUSTOMER_ORDER_NO_DUPLICATE);       
     when others then
       rollback;
-      ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_OTHERS);
+      ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_CUSTOMER_ORDER_INSERT);
     
   end;
 

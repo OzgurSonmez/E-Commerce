@@ -23,16 +23,17 @@ create or replace noneditionable package body basketManager_pkg is
     insert into basket
       (basketid, customerid)
     values
-      (v_basketId, p_customerId);
-    
+      (v_basketId, p_customerId);    
+
     -- Bir kullaniciya birden fazla sepet eklenirse hata olusur.
+    -- Sepet kimligi eklenmez ise hata olusur.
   exception
     when dup_val_on_index then      
       rollback;
       ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_BASKET_DUPLICATE);
     when others then
       rollback;
-      ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_OTHERS);    
+      ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_BASKET_INSERT);    
   end;
 
   function getBasketIdByCustomerId(p_customerId customer.customerid%type)
@@ -51,9 +52,12 @@ create or replace noneditionable package body basketManager_pkg is
     return v_basketId;
     
     -- Musteriye ait sepet bulunamazsa hata verir.
+    -- Musteriye air birden fazla sepet bulunursa hata verir.
   exception
     when no_data_found then
       ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_BASKET_NOT_FOUND);
+    when too_many_rows then
+      ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_BASKET_TOO_MANY_ROWS);
     when others then
       ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_OTHERS);
   end;

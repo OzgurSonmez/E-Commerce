@@ -65,19 +65,20 @@ create or replace noneditionable package body customerManager_pkg is
        v_passwordSalt,
        p_emailId,
        v_isAccountActive);
-  
+
     -- Musteriye ait bir sepet olusturur.
     basketManager_pkg.addBasket(p_customerId => v_customerId);
     
     commit;
-  
+    
+  -- Musteri eklenmezse hata uretir
   exception
     when dup_val_on_index then
       rollback;
       ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_CUSTOMER_DUPLICATE);
     when others then
       rollback;
-      ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_OTHERS);
+      ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_BASKET_PRODUCT_INSERT);
     
   end;
 
@@ -140,7 +141,9 @@ create or replace noneditionable package body customerManager_pkg is
     -- EmailId'ye gore parola bulunamazsa hata verir.
     exception
       when no_data_found then
-           ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_CUSTOMER_PASSWORD_NOT_FOUND); 
+           ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_CUSTOMER_PASSWORD_NOT_FOUND);
+      when too_many_rows then
+           ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_CUSTOMER_PASSWORD_TOO_MANY_ROWS); 
       when others then
            ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_OTHERS);  
   end;
@@ -169,9 +172,17 @@ create or replace noneditionable package body customerManager_pkg is
     fetch c_changePasswordCustomer into v_changePasswordCustomer;
        update customer c
         set c.passwordhash = v_newPasswordHash, c.passwordsalt = v_newPasswordSalt
-        where current of c_changePasswordCustomer;
-    close c_changePasswordCustomer;
+        where current of c_changePasswordCustomer;    
     
+      -- Musteri sifresi degismezse hata uretir.
+      if sql%notfound then
+        close c_changePasswordCustomer;
+        rollback;
+        ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_CUSTOMER_PASSWORD_FOR_UPDATE);
+      end if;
+      
+    close c_changePasswordCustomer;
+      
     commit;
     
     -- Uygun musteri bulunamazsa hata verir.
