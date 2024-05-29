@@ -31,7 +31,8 @@ create or replace noneditionable package body passwordSecurity_pkg is
       -- 'p' : Dönen string, yazdirilabilir karakterlerden olusur.
       v_generatedSalt := dbms_random.string('p', 16);
       -- Olusturulan salt benzersiz olana kadar yeni salt uretilir.
-      exit when Customermanager_Pkg.isPasswordSaltExists(v_generatedSalt) = 0;
+      -- Salt daha mevcutsa true doner. False donene kadar salt uretilir.
+      exit when Customermanager_Pkg.isPasswordSaltExists(v_generatedSalt) = false;
     end loop;
     return v_generatedSalt;
   end;
