@@ -40,6 +40,11 @@ create or replace noneditionable package ecpError_pkg is
   ERR_CODE_PRODUCT_CATEGORY_NOT_FOUND_TO_DELETE CONSTANT NUMBER := -20120;
   ERR_CODE_TAX_NOT_FOUND CONSTANT NUMBER := -20121;
   ERR_CODE_TAX_TOO_MANY_ROWS CONSTANT NUMBER := -20122;
+  ERR_CODE_REGISTER CONSTANT NUMBER := -20122;
+  ERR_CODE_LOGIN CONSTANT NUMBER := -20122;
+  ERR_CODE_CHANGE_PASSWORD CONSTANT NUMBER := -20122;
+  ERR_CODE_COMPLATE_ORDER CONSTANT NUMBER := -20122;
+  ERR_CODE_ORDER_CSV_FILE CONSTANT NUMBER := -20122;
   
   -- Hata mesajlari --------------
   ERR_MSG_OTHERS CONSTANT VARCHAR2(100) := 'Beklenmedik bir hata olustu. '; 
@@ -75,12 +80,17 @@ create or replace noneditionable package ecpError_pkg is
   ERR_MSG_CUSTOMER_ORDER_NOT_FOUND_FOR_UPDATE CONSTANT VARCHAR2(100) := 'Guncellenecek musteri siparisi bulunamadi';
   ERR_MSG_CUSTOMER_ORDER_INSERT CONSTANT VARCHAR2(100) := 'Musterinin siparis numarasi olusturulurken hata olustu';
   ERR_MSG_CUSTOMER_ORDER_DETAIL_INSERT CONSTANT VARCHAR2(100) := 'Musterinin siparis detayina urun eklerken hata olustu';
-  ERR_MSG_CUSTOMER_PRODUCT_FAVORITE_INSERT CONSTANT VARCHAR2(100) := 'Kullanici urunu favoriye eklerken bir hata olustu.';
+  ERR_MSG_CUSTOMER_PRODUCT_FAVORITE_INSERT CONSTANT VARCHAR2(100) := 'Kullanici urunu favoriye eklerken hata olustu.';
   ERR_MSG_CUSTOMER_PRODUCT_FAVORITE_NOT_FOUND_FOR_UPDATE CONSTANT VARCHAR2(100) := 'Favori durumu guncellenmesi icin uygun urun bulunamadi.';
-  ERR_MSG_PRODUCT_CATEGORY_INSERT CONSTANT VARCHAR2(100) := 'Kategoriye urun eklerken bir hata olustu.';
+  ERR_MSG_PRODUCT_CATEGORY_INSERT CONSTANT VARCHAR2(100) := 'Kategoriye urun eklerken hata olustu.';
   ERR_MSG_PRODUCT_CATEGORY_NOT_FOUND_TO_DELETE CONSTANT VARCHAR2(100) := 'Kategoriden silinecek urun bulunamadi.';
   ERR_MSG_TAX_NOT_FOUND CONSTANT VARCHAR2(100) := 'Vergi bulunamadi.';
   ERR_MSG_TAX_TOO_MANY_ROWS CONSTANT VARCHAR2(100) := 'Girilen vergi adindan birden fazla var.';
+  ERR_MSG_REGISTER CONSTANT VARCHAR2(100) := 'Musteri kaydi olustulurken hata olustu.';
+  ERR_MSG_LOGIN CONSTANT VARCHAR2(100) := 'Musteri giris yaparken hata olustu.';
+  ERR_MSG_CHANGE_PASSWORD CONSTANT VARCHAR2(100) := 'Musteri parolasi degistirilirken hata olustu.';
+  ERR_MSG_COMPLATE_ORDER CONSTANT VARCHAR2(100) := 'Siparis tamamlanirken hata olustu.';
+  ERR_MSG_ORDER_CSV_FILE CONSTANT VARCHAR2(100) := 'Siparisin csv dosyasi olusturulurken hata olustu.';
   
   -- Validasyon hata kodlari --------------
   -- Email
@@ -346,8 +356,17 @@ create or replace noneditionable package body ecpError_pkg is
           errorMessage := ERR_MSG_CUSTOMER_ID_TOO_MANY_ROWS;
       when ERR_CODE_CUSTOMER_SESSION_IS_LOGIN_FOR_UPDATE then
           errorMessage := ERR_MSG_CUSTOMER_SESSION_IS_LOGIN_FOR_UPDATE;     
-          
-  
+      when ERR_CODE_REGISTER then
+          errorMessage := ERR_MSG_REGISTER;    
+      when ERR_CODE_LOGIN then
+          errorMessage := ERR_MSG_LOGIN;
+      when ERR_CODE_CHANGE_PASSWORD then
+          errorMessage := ERR_MSG_CHANGE_PASSWORD;
+      when ERR_CODE_COMPLATE_ORDER then
+          errorMessage := ERR_MSG_COMPLATE_ORDER;
+      when ERR_CODE_ORDER_CSV_FILE then
+          errorMessage := ERR_MSG_ORDER_CSV_FILE;     
+ 
       else
           errorMessage := ERR_MSG_OTHERS || sqlerrm;          
     end case;

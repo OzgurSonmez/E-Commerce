@@ -1,4 +1,4 @@
-create or replace package customerSessionManager_pkg is
+create or replace noneditionable package customerSessionManager_pkg is
 
    procedure addCustomerSession(p_customerId customersession.customerid%type);
    
@@ -6,7 +6,7 @@ create or replace package customerSessionManager_pkg is
 
 end customerSessionManager_pkg;
 /
-create or replace package body customerSessionManager_pkg is
+create or replace noneditionable package body customerSessionManager_pkg is
 
   procedure addCustomerSession(p_customerId customersession.customerid%type) is
     v_customerSessionId customersession.customersessionid%type;
@@ -64,7 +64,6 @@ create or replace package body customerSessionManager_pkg is
     end if;
     
     close c_loginStatus;
-    commit;
     
     exception
     when others then

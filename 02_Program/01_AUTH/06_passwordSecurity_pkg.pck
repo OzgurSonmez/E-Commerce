@@ -17,6 +17,7 @@ create or replace noneditionable package body passwordSecurity_pkg is
                         p_salt     customer.passwordsalt%type)
     return customer.passwordhash%type is
   begin
+    --SHA-256 algoritmasi kullanilir.
     return rawtohex(dbms_crypto.hash(utl_i18n.string_to_raw(p_password ||
                                                             p_salt,
                                                             'AL32UTF8'),
@@ -31,7 +32,7 @@ create or replace noneditionable package body passwordSecurity_pkg is
       -- 'p' : Dönen string, yazdirilabilir karakterlerden olusur.
       v_generatedSalt := dbms_random.string('p', 16);
       -- Olusturulan salt benzersiz olana kadar yeni salt uretilir.
-      -- Salt daha mevcutsa true doner. False donene kadar salt uretilir.
+      -- Salt mevcutsa true doner. False donene kadar salt uretilir.
       exit when Customermanager_Pkg.isPasswordSaltExists(v_generatedSalt) = false;
     end loop;
     return v_generatedSalt;

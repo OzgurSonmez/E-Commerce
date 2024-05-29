@@ -73,10 +73,8 @@ create or replace noneditionable package body customerManager_pkg is
     basketManager_pkg.addBasket(p_customerId => v_customerId);
   
     -- Musteriye ait bir oturum durumu olusturur.
-    customerSessionManager_pkg.addCustomerSession(p_customerId => v_customerId);
-  
-    commit;
-  
+    customerSessionManager_pkg.addCustomerSession(p_customerId => v_customerId); 
+    
     -- Musteri eklenmezse hata uretir
   exception
     when dup_val_on_index then
@@ -215,10 +213,8 @@ create or replace noneditionable package body customerManager_pkg is
     if sql%notfound then
       rollback;
       ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_CUSTOMER_PASSWORD_FOR_UPDATE);
-    end if;
-  
-    commit;
-  
+    end if; 
+   
     -- Uygun musteri bulunamazsa hata verir.
     -- Benzersiz password salt uretilmezse hata verir.
   exception
