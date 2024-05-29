@@ -16,19 +16,19 @@ create or replace noneditionable package body productManager_pkg is
 
   procedure addProduct(p_addProduct in addProduct_type) is
     v_productId product.productid%type;
-  begin 
-
+  begin
+  
     v_productId := product_seq.nextval;
-    
+  
     -- Parametre kontrolu yapilir.
     ecpValidate_pkg.brandParameters(p_brandId => p_addProduct.brandId);
-    ecpValidate_pkg.productParameters(p_productId => v_productId,
-                                      p_productName => p_addProduct.productName,
+    ecpValidate_pkg.productParameters(p_productId          => v_productId,
+                                      p_productName        => p_addProduct.productName,
                                       p_productDescription => p_addProduct.productDescription,
-                                      p_price => p_addProduct.price,
-                                      p_discountPercentage => p_addProduct.discountPercentange);                            
-    ecpValidate_pkg.categoryParameters(p_categoryId => p_addProduct.categoryId);                                  
-                                       
+                                      p_price              => p_addProduct.price,
+                                      p_discountPercentage => p_addProduct.discountPercentange);
+    ecpValidate_pkg.categoryParameters(p_categoryId => p_addProduct.categoryId);
+  
     -- Urun eklenir.
     insert into product
       (productid,
@@ -46,7 +46,7 @@ create or replace noneditionable package body productManager_pkg is
        p_addProduct.price,
        NVL(p_addProduct.discountPercentange, 0),
        0);
-    
+  
     -- Urun bir kategoriye eklenir.
     productCategoryManager_pkg.addProductCategory(p_productId  => v_productId,
                                                   p_categoryId => p_addProduct.categoryId);
@@ -56,23 +56,22 @@ create or replace noneditionable package body productManager_pkg is
   exception
     when others then
       rollback;
-      ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_PRODUCT_INSERT);    
+      ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_PRODUCT_INSERT);
   end;
-  
 
   procedure deleteProduct(p_productId product.productid%type) is
   begin
     -- Parametre kontrolu yapilir.
     ecpValidate_pkg.productParameters(p_productId => p_productId);
-    
+  
     -- Urunu silmeden once kategoriye bagliligi kaldirilir.
     productCategoryManager_pkg.deleteProductCategoryByProductId(p_productId => p_productId);
-    
+  
     -- Urun silinir.
     delete product p where p.productid = p_productId;
   
     -- Silinen bir urun yoksa hata uret.
-    if (sql%rowcount = 0) then      
+    if sql%notfound then
       ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_PRODUCT_NOT_FOUND_TO_DELETE);
     end if;
   
@@ -80,7 +79,7 @@ create or replace noneditionable package body productManager_pkg is
   exception
     when others then
       rollback;
-      ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_OTHERS); 
+      ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_OTHERS);
   end;
 
   procedure filterProduct(p_filterProduct in filterProduct_type) is
@@ -97,13 +96,13 @@ create or replace noneditionable package body productManager_pkg is
   
     v_rec_product rec_product;
   
-  BEGIN
+  begin
     -- parametre kontrolu yapilir.
     ecpValidate_pkg.categoryParameters(p_categoryId => p_filterProduct.categoryId);
     ecpValidate_pkg.brandParameters(p_brandId => p_filterProduct.brandId);
     ecpValidate_pkg.productParameters(p_productName => p_filterProduct.productName,
-                                      p_price => p_filterProduct.minPrice);
-    ecpValidate_pkg.productParameters(p_price => p_filterProduct.maxPrice); 
+                                      p_price       => p_filterProduct.minPrice);
+    ecpValidate_pkg.productParameters(p_price => p_filterProduct.maxPrice);
   
     -- recursiveCategory sorgusu parametreden gelen categoryId'nin alt kategorileri döner.
     -- categoryId null deðer gelirse tüm kategorileri döner.
@@ -190,10 +189,10 @@ create or replace noneditionable package body productManager_pkg is
         close v_cursor;
       end if;
       ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_OTHERS);
-  END;
+  end;
 
   procedure increaseProductFavoriteCount(p_productId product.productid%type) is
-  
+    -- Urunun favori sayisi alinir ve kitlenir. 
     cursor c_productFavoriteCount is
       select p.favcount
         from product p
@@ -201,77 +200,86 @@ create or replace noneditionable package body productManager_pkg is
          for update;
     v_currentProductFavoriteCount product.favcount%type;
   begin
+    -- Parametre kontrolu yapilir.
+    ecpValidate_pkg.productParameters(p_productId => p_productId);
+  
     open c_productFavoriteCount;
+  
     fetch c_productFavoriteCount
       into v_currentProductFavoriteCount;
   
+    -- Veri bulunursa favori sayisini arttýr.
     if c_productFavoriteCount%found then
-      update product p 
-             set p.favcount = v_currentProductFavoriteCount + 1
-             where current of c_productFavoriteCount;
-             
+      update product p
+         set p.favcount = v_currentProductFavoriteCount + 1
+       where current of c_productFavoriteCount;
+    
       -- Urunun favori sayisi degismezse hata verir.
       if sql%notfound then
         close c_productFavoriteCount;
         rollback;
         ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_PRODUCT_FAVORITE_COUNT_FOR_UPDATE);
       end if;
-    else
-      close c_productFavoriteCount;
-      rollback;      
-      ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_PRODUCT_NOT_FOUND);
-    end if;
-  
-    close c_productFavoriteCount;
-    
-    exception
-       when others then
-        if c_productFavoriteCount%isopen then
-          close c_productFavoriteCount;          
-        end if;
-        rollback;
-        ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_OTHERS);
-  end;
-  
-  
-  procedure decreaseProductFavoriteCount(p_productId product.productid%type) is
-  
-    cursor c_productFavoriteCount is
-      select p.favcount
-        from product p
-       where p.productid = p_productId
-         for update;
-    v_currentProductFavoriteCount product.favcount%type;
-  begin
-    
-    open c_productFavoriteCount;
-    fetch c_productFavoriteCount
-      into v_currentProductFavoriteCount;
-  
-    if c_productFavoriteCount%found then
-      update product p 
-             set p.favcount = v_currentProductFavoriteCount - 1
-             where current of c_productFavoriteCount;
-      -- Urunun favori sayisi degismezse hata verir.
-      if sql%notfound then
-        close c_productFavoriteCount;
-        rollback;
-        ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_PRODUCT_FAVORITE_COUNT_FOR_UPDATE);
-      end if;
+      -- Veri bulunmazsa hata uret.
     else
       close c_productFavoriteCount;
       rollback;
       ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_PRODUCT_NOT_FOUND);
     end if;
-    close c_productFavoriteCount; 
-    
-    exception
-       when others then
-        if c_productFavoriteCount%isopen then
-          close c_productFavoriteCount;          
-        end if;
+  
+    close c_productFavoriteCount;
+  
+  exception
+    when others then
+      if c_productFavoriteCount%isopen then
+        close c_productFavoriteCount;
+      end if;
+      rollback;
+      ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_OTHERS);
+  end;
+
+  procedure decreaseProductFavoriteCount(p_productId product.productid%type) is
+    -- Urunun favori sayisi alinir ve kitlenir.
+    cursor c_productFavoriteCount is
+      select p.favcount
+        from product p
+       where p.productid = p_productId
+         for update;
+    v_currentProductFavoriteCount product.favcount%type;
+  begin
+    -- Parametre kontrolu yapilir.
+    ecpValidate_pkg.productParameters(p_productId => p_productId);
+  
+    open c_productFavoriteCount;
+    fetch c_productFavoriteCount
+      into v_currentProductFavoriteCount;
+  
+    -- Veri bulunursa favori sayisini azalt.
+    if c_productFavoriteCount%found then
+      update product p
+         set p.favcount = v_currentProductFavoriteCount - 1
+       where current of c_productFavoriteCount;
+      -- Urunun favori sayisi degismezse hata verir.
+      if sql%notfound then
+        close c_productFavoriteCount;
         rollback;
-        ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_OTHERS);
+        ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_PRODUCT_FAVORITE_COUNT_FOR_UPDATE);
+      end if;
+      -- Veri bulunmazsa hata uret.
+    else
+      close c_productFavoriteCount;
+      rollback;
+      ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_PRODUCT_NOT_FOUND);
+    end if;
+    close c_productFavoriteCount;
+  
+  exception
+    when others then
+      if c_productFavoriteCount%isopen then
+        close c_productFavoriteCount;
+      end if;
+      rollback;
+      ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_OTHERS);
   end;
 
 end productManager_pkg;
