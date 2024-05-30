@@ -60,6 +60,7 @@ create or replace noneditionable package body productManager_pkg is
   end;
 
   procedure deleteProduct(p_productId product.productid%type) is
+    err_product_not_found_to_delete exception;
   begin
     -- Parametre kontrolu yapilir.
     ecpValidate_pkg.productParameters(p_productId => p_productId);
@@ -72,11 +73,14 @@ create or replace noneditionable package body productManager_pkg is
   
     -- Silinen bir urun yoksa hata uret.
     if sql%notfound then
-      ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_PRODUCT_NOT_FOUND_TO_DELETE);
+      raise err_product_not_found_to_delete;
     end if;
   
     commit;
   exception
+    when err_product_not_found_to_delete then
+      rollback;
+      ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_PRODUCT_NOT_FOUND_TO_DELETE);
     when others then
       rollback;
       ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_OTHERS);
@@ -95,6 +99,7 @@ create or replace noneditionable package body productManager_pkg is
       favcount     product.favcount%type);
   
     v_rec_product rec_product;
+    v_counter     pls_integer := 0;
   
   begin
     -- parametre kontrolu yapilir.
@@ -173,7 +178,9 @@ create or replace noneditionable package body productManager_pkg is
         into v_rec_product;
       exit when v_cursor%notfound;
     
-      dbms_output.put_line(' ' || v_rec_product.categoryName || ' ' ||
+      v_counter := v_counter + 1;
+      dbms_output.put_line(v_counter || '-> ' ||
+                           v_rec_product.categoryName || ' ' ||
                            v_rec_product.brandName || ' ' ||
                            v_rec_product.productName || ' ' ||
                            v_rec_product.price || ' ' ||
@@ -199,6 +206,9 @@ create or replace noneditionable package body productManager_pkg is
        where p.productid = p_productId
          for update;
     v_currentProductFavoriteCount product.favcount%type;
+  
+    err_product_favorite_count_for_update exception;
+    err_product_not_found                 exception;
   begin
     -- Parametre kontrolu yapilir.
     ecpValidate_pkg.productParameters(p_productId => p_productId);
@@ -216,20 +226,24 @@ create or replace noneditionable package body productManager_pkg is
     
       -- Urunun favori sayisi degismezse hata verir.
       if sql%notfound then
-        close c_productFavoriteCount;
-        rollback;
-        ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_PRODUCT_FAVORITE_COUNT_FOR_UPDATE);
+        raise err_product_favorite_count_for_update;
       end if;
       -- Veri bulunmazsa hata uret.
     else
-      close c_productFavoriteCount;
-      rollback;
-      ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_PRODUCT_NOT_FOUND);
+      raise err_product_not_found;
     end if;
   
     close c_productFavoriteCount;
   
   exception
+    when err_product_favorite_count_for_update then
+      close c_productFavoriteCount;
+      rollback;
+      ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_PRODUCT_FAVORITE_COUNT_FOR_UPDATE);
+    when err_product_not_found then
+      close c_productFavoriteCount;
+      rollback;
+      ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_PRODUCT_NOT_FOUND);
     when others then
       if c_productFavoriteCount%isopen then
         close c_productFavoriteCount;
@@ -246,6 +260,9 @@ create or replace noneditionable package body productManager_pkg is
        where p.productid = p_productId
          for update;
     v_currentProductFavoriteCount product.favcount%type;
+  
+    err_product_favorite_count_for_update exception;
+    err_product_not_found                 exception;
   begin
     -- Parametre kontrolu yapilir.
     ecpValidate_pkg.productParameters(p_productId => p_productId);
@@ -261,19 +278,25 @@ create or replace noneditionable package body productManager_pkg is
        where current of c_productFavoriteCount;
       -- Urunun favori sayisi degismezse hata verir.
       if sql%notfound then
-        close c_productFavoriteCount;
-        rollback;
-        ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_PRODUCT_FAVORITE_COUNT_FOR_UPDATE);
+        raise err_product_favorite_count_for_update;
       end if;
+    
       -- Veri bulunmazsa hata uret.
     else
-      close c_productFavoriteCount;
-      rollback;
-      ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_PRODUCT_NOT_FOUND);
+      raise err_product_not_found;
     end if;
+  
     close c_productFavoriteCount;
   
   exception
+    when err_product_favorite_count_for_update then
+      close c_productFavoriteCount;
+      rollback;
+      ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_PRODUCT_FAVORITE_COUNT_FOR_UPDATE);
+    when err_product_not_found then
+      close c_productFavoriteCount;
+      rollback;
+      ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_PRODUCT_NOT_FOUND);
     when others then
       if c_productFavoriteCount%isopen then
         close c_productFavoriteCount;

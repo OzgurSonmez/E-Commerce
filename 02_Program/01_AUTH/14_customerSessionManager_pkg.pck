@@ -15,7 +15,7 @@ create or replace noneditionable package body customerSessionManager_pkg is
     v_customerSessionId := customerSession_seq.nextval;
     -- Uye olduktan sonra oturum kapali olarak ayarlansin.
     v_isLogin := 0;
-    
+  
     -- Parametre kontrolu yapilir.
     ecpValidate_pkg.customerParameters(p_customerId => p_customerId);
     ecpValidate_pkg.customerSessionParameters(p_customerSessionId => v_customerSessionId,
@@ -36,36 +36,41 @@ create or replace noneditionable package body customerSessionManager_pkg is
       rollback;
       ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_CUSTOMER_SESSION_INSERT);
   end;
-  
+
   procedure setLoginStatusTrue(p_customerId customersession.customerid%type) is
-    cursor c_loginStatus is select cs.islogin from customersession cs
-                          where cs.customerid = p_customerId
-                          for update;
-    v_currentLoginStatus customersession.islogin%type;
-    v_loginStatus customersession.islogin%type;
+    cursor c_loginStatus is
+      select cs.islogin
+        from customersession cs
+       where cs.customerid = p_customerId
+         for update;
+    v_currentLoginStatus                     customersession.islogin%type;
+    v_loginStatus                            customersession.islogin%type;
+    err_customer_session_is_login_for_update exception;
   begin
     -- Oturum durumu 1 secilir.
     v_loginStatus := 1;
     -- Parametre kontrolu yapilir.
     ecpValidate_pkg.customerParameters(p_customerId => p_customerId);
     ecpValidate_pkg.customerSessionParameters(p_isLogin => v_loginStatus);
-    
+  
     open c_loginStatus;
-    fetch c_loginStatus into v_currentLoginStatus;
-    
+    fetch c_loginStatus
+      into v_currentLoginStatus;
+  
     -- Oturum durumu kapali ise acar.
     if (v_currentLoginStatus = 0) then
-       update customersession cs
-          set cs.islogin = v_loginStatus;
-       -- Oturum durumu guncellenmezse hata verir
-       if sql%notfound then
-         ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_CUSTOMER_SESSION_IS_LOGIN_FOR_UPDATE);
-         end if;
+      update customersession cs set cs.islogin = v_loginStatus;
+      -- Oturum durumu guncellenmezse hata verir
+      if sql%notfound then
+        raise err_customer_session_is_login_for_update;
+      end if;
     end if;
-    
+  
     close c_loginStatus;
-    
-    exception
+  
+  exception
+    when err_customer_session_is_login_for_update then
+      ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_CUSTOMER_SESSION_IS_LOGIN_FOR_UPDATE);
     when others then
       rollback;
       ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_OTHERS);

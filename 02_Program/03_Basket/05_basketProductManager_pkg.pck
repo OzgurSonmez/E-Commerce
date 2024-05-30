@@ -61,6 +61,7 @@ create or replace noneditionable package body basketProductManager_pkg is
     v_productCount           pls_integer;
     v_basketProductId        basketProduct.basketproductid%type;
     v_isSelected             basketProduct.Isselected%type := 1;
+    err_product_not_found_in_basket exception;    
   begin
     -- Parametre kontrolu yapilir.
     ecpValidate_pkg.basketParameters(p_basketId => p_basketProduct.basketId);
@@ -89,8 +90,7 @@ create or replace noneditionable package body basketProductManager_pkg is
       
       -- Guncellenecek urun sepette bulunamazsa hata verir.
       if sql%notfound then
-         rollback;
-         ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_PRODUCT_NOT_FOUND_FROM_BASKET_FOR_UPDATE);
+         raise err_product_not_found_in_basket;         
       end if;
       
     -- Sepette daha once belirtilen urun yoksa sepete urunu ekler.
@@ -115,6 +115,9 @@ create or replace noneditionable package body basketProductManager_pkg is
     commit;
   
   exception
+    when err_product_not_found_in_basket then
+      rollback;
+      ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_PRODUCT_NOT_FOUND_IN_BASKET_FOR_UPDATE);
     when others then
       close c_updateProductQuantity;
       rollback;
@@ -124,6 +127,7 @@ create or replace noneditionable package body basketProductManager_pkg is
 
   procedure deleteProductFromBasket(p_basketId  basketproduct.basketid%type,
                                     p_productId basketproduct.productid%type) is
+  err_product_not_found_to_delete_from_basket exception;
   begin
     -- Parametre kontrolu yapilir.
     ecpValidate_pkg.basketParameters(p_basketId => p_basketId);
@@ -136,13 +140,15 @@ create or replace noneditionable package body basketProductManager_pkg is
        
      -- Silinecek urun sepette bulunamazsa hata verir.
     if sql%notfound then
-      rollback;
-      ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_PRODUCT_NOT_FOUND_TO_DELETE_FROM_BASKET);
+      raise err_product_not_found_to_delete_from_basket;      
     end if;
   
     commit;
   
   exception
+    when err_product_not_found_to_delete_from_basket then
+      rollback;
+      ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_PRODUCT_NOT_FOUND_TO_DELETE_FROM_BASKET);
     when others then
       rollback;
       ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_OTHERS);
@@ -183,6 +189,8 @@ create or replace noneditionable package body basketProductManager_pkg is
   procedure decreaseProductFromBasket(p_basketProduct in basketProduct_type) is
     v_currentProductQuantity basketProduct.Productquantity%type;
     v_resultProductQuantity  basketProduct.Productquantity%type;
+    err_product_not_found_in_basket_for_update exception;
+    err_product_not_found_to_delete_from_basket exception;
   begin
     -- Parametre kontrolu yapilir.
     ecpValidate_pkg.basketParameters(p_basketId => p_basketProduct.basketId);
@@ -204,8 +212,7 @@ create or replace noneditionable package body basketProductManager_pkg is
          and bp.productid = p_basketProduct.productId;
        -- Guncellenecek urun sepette bulunamazsa hata verir.
       if sql%notfound then
-         rollback;
-         ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_PRODUCT_NOT_FOUND_FROM_BASKET_FOR_UPDATE);
+        raise err_product_not_found_in_basket_for_update;         
       end if;
     else
       -- Urunun sepette kalacak adedi 0 veya daha az ise urun sepetten silinir.
@@ -213,14 +220,19 @@ create or replace noneditionable package body basketProductManager_pkg is
                               p_productId => p_basketProduct.productId);
       -- Silinecek urun sepette bulunamazsa hata verir.
       if sql%notfound then
-         rollback;
-         ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_PRODUCT_NOT_FOUND_TO_DELETE_FROM_BASKET);
+        raise err_product_not_found_to_delete_from_basket;         
       end if;       
     end if;
   
     commit;
   
   exception
+    when err_product_not_found_in_basket_for_update then
+      rollback;
+      ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_PRODUCT_NOT_FOUND_IN_BASKET_FOR_UPDATE);
+    when err_product_not_found_to_delete_from_basket then
+      rollback;
+      ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_PRODUCT_NOT_FOUND_TO_DELETE_FROM_BASKET);
     when others then
       rollback;
       ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_OTHERS);
@@ -277,6 +289,7 @@ create or replace noneditionable package body basketProductManager_pkg is
   
   procedure deleteProductListFromBasket(p_list_basketProduct getBasketProductList_type) is
     v_list_index pls_integer;
+    err_product_not_found_to_delete_from_basket exception;
   begin    
     v_list_index := p_list_basketProduct.first;
     
@@ -289,14 +302,16 @@ create or replace noneditionable package body basketProductManager_pkg is
           where bp.basketproductid = p_list_basketProduct(v_list_index).basketProductId;
         -- Silinecek urun sepette bulunamazsa hata verir.
        if sql%notfound then
-         rollback;
-         ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_PRODUCT_NOT_FOUND_TO_DELETE_FROM_BASKET);
+         raise err_product_not_found_to_delete_from_basket;         
        end if; 
           
       v_list_index := p_list_basketProduct.Next(v_list_index);
     end loop;
     
     exception
+      when err_product_not_found_to_delete_from_basket then
+        rollback;
+         ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_PRODUCT_NOT_FOUND_TO_DELETE_FROM_BASKET);
       when others then
          rollback;
          ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_OTHERS);
@@ -314,6 +329,7 @@ create or replace noneditionable package body basketProductManager_pkg is
                                        and bp.productid = p_productId
                                            for update;
   v_selectedStatus basketproduct.isselected%type;
+  err_product_not_found_in_basket exception;
   begin
     -- Parametre kontrolu yapilir.
     ecpValidate_pkg.basketParameters(p_basketId => p_basketId);
@@ -329,8 +345,7 @@ create or replace noneditionable package body basketProductManager_pkg is
          where current of c_selectedStatus;
       -- Guncellenecek urun sepette bulunamazsa hata verir.
       if sql%notfound then
-         rollback;
-         ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_PRODUCT_NOT_FOUND_FROM_BASKET_FOR_UPDATE);
+        raise err_product_not_found_in_basket;         
       end if;
       
     -- Urunun sepetteki durumu secili ise secilmemise cevirir.
@@ -340,8 +355,7 @@ create or replace noneditionable package body basketProductManager_pkg is
          where current of c_selectedStatus;
       -- Guncellenecek urun sepette bulunamazsa hata verir.
       if sql%notfound then
-         rollback;
-         ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_PRODUCT_NOT_FOUND_FROM_BASKET_FOR_UPDATE);
+         raise err_product_not_found_in_basket;
       end if;
     end if;
     
@@ -350,6 +364,9 @@ create or replace noneditionable package body basketProductManager_pkg is
     commit;
     
     exception
+      when err_product_not_found_in_basket then
+        rollback;
+        ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_PRODUCT_NOT_FOUND_IN_BASKET_FOR_UPDATE);
       when others then
          rollback;
          ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_OTHERS);

@@ -49,6 +49,7 @@ create or replace noneditionable package body orderManagement_pkg is
   
   exception
     when others then
+      rollback;
       ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_COMPLATE_ORDER);
     
   end;

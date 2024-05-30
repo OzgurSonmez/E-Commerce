@@ -189,6 +189,7 @@ create or replace noneditionable package body customerManager_pkg is
     v_changePasswordCustomer c_changePasswordCustomer%rowtype;
     v_newPasswordHash        customer.passwordhash%type;
     v_newPasswordSalt        customer.passwordsalt%type;
+    err_customer_password_for_update exception;
   begin
     v_newPasswordSalt := passwordsecurity_pkg.generateSalt();
     v_newPasswordHash := passwordsecurity_pkg.generateHash(p_password => p_newPassword,
@@ -211,13 +212,15 @@ create or replace noneditionable package body customerManager_pkg is
   
     -- Musteri sifresi degismezse hata uretir.
     if sql%notfound then
-      rollback;
-      ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_CUSTOMER_PASSWORD_FOR_UPDATE);
+      raise err_customer_password_for_update;      
     end if; 
    
     -- Uygun musteri bulunamazsa hata verir.
     -- Benzersiz password salt uretilmezse hata verir.
   exception
+    when err_customer_password_for_update then
+      rollback;
+      ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_CUSTOMER_PASSWORD_FOR_UPDATE);
     when no_data_found then
       close c_changePasswordCustomer;
       rollback;

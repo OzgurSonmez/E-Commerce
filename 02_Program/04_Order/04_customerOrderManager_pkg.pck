@@ -58,6 +58,7 @@ create or replace noneditionable package body customerOrderManager_pkg is
 
   procedure updateTotalPriceToCustomerOrder(p_customerOrderId customerorder.customerid%type,
                                             p_totalPrice      customerorder.totalprice%type) is
+  err_customer_order_not_found_for_update exception;
   begin
     -- Parametre kontrolu yapilir.
     ecpValidate_pkg.customerOrderParameters(p_customerOrderId => p_customerOrderId,
@@ -69,11 +70,13 @@ create or replace noneditionable package body customerOrderManager_pkg is
      where co.customerorderid = p_customerOrderId;
     -- Guncellenecek musteri siparisi bulunamazsa hata verir.
     if sql%notfound then
-      rollback;
-      ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_CUSTOMER_ORDER_NOT_FOUND_FOR_UPDATE);
+      raise err_customer_order_not_found_for_update;      
     end if;
   
   exception
+    when err_customer_order_not_found_for_update then
+      rollback;
+      ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_CUSTOMER_ORDER_NOT_FOUND_FOR_UPDATE);
     when others then
       ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_OTHERS);
   end;
