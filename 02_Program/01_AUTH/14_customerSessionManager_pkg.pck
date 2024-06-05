@@ -38,11 +38,7 @@ create or replace noneditionable package body customerSessionManager_pkg is
   end;
 
   procedure setLoginStatusTrue(p_customerId customersession.customerid%type) is
-    cursor c_loginStatus is
-      select cs.islogin
-        from customersession cs
-       where cs.customerid = p_customerId
-         for update;
+  
     v_currentLoginStatus                     customersession.islogin%type;
     v_loginStatus                            customersession.islogin%type;
     err_customer_session_is_login_for_update exception;
@@ -53,9 +49,12 @@ create or replace noneditionable package body customerSessionManager_pkg is
     ecpValidate_pkg.customerParameters(p_customerId => p_customerId);
     ecpValidate_pkg.customerSessionParameters(p_isLogin => v_loginStatus);
   
-    open c_loginStatus;
-    fetch c_loginStatus
-      into v_currentLoginStatus;
+    -- Guncellenecek satir kilitlenir. 
+    select cs.islogin
+      into v_currentLoginStatus
+      from customersession cs
+     where cs.customerid = p_customerId
+       for update;
   
     -- Oturum durumu kapali ise acar.
     if (v_currentLoginStatus = 0) then
@@ -65,8 +64,6 @@ create or replace noneditionable package body customerSessionManager_pkg is
         raise err_customer_session_is_login_for_update;
       end if;
     end if;
-  
-    close c_loginStatus;
   
   exception
     when err_customer_session_is_login_for_update then

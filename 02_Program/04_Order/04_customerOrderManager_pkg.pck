@@ -61,16 +61,23 @@ create or replace noneditionable package body customerOrderManager_pkg is
 
   procedure updateTotalPriceToCustomerOrder(p_customerOrderId customerorder.customerid%type,
                                             p_totalPrice      customerorder.totalprice%type) is
+    v_currentTotalPrice                     customerorder.totalprice%type;
     err_customer_order_not_found_for_update exception;
   begin
     -- Parametre kontrolu yapilir.
     ecpValidate_pkg.customerOrderParameters(p_customerOrderId => p_customerOrderId,
                                             p_totalPrice      => p_totalPrice);
   
+    -- Guncellenecek satiri kilitler.
+    select co.totalprice
+           into v_currentTotalPrice
+      from customerorder co
+           where co.customerorderid = p_customerOrderId
+           for update;
+    
     -- Siparisin toplam tutarini gunceller.
-    update customerorder co
-       set co.totalprice = p_totalPrice
-     where co.customerorderid = p_customerOrderId;
+     update customerorder co set co.totalprice = p_totalPrice
+            where co.customerorderid = p_customerOrderId;
     -- Guncellenecek musteri siparisi bulunamazsa hata verir.
     if sql%notfound then
       raise err_customer_order_not_found_for_update;

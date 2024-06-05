@@ -8,25 +8,24 @@ create or replace noneditionable package basketProductManager_pkg is
 
   procedure deleteProductFromBasket(p_basketId  basketproduct.basketid%type,
                                     p_productId basketproduct.productid%type);
-  
+
   function getQuantityOfTheProductInBasket(p_basketId  basketproduct.basketid%type,
                                            p_productId basketproduct.productid%type)
     return basketProduct.productquantity%type;
-  
-  
+
   procedure decreaseProductFromBasket(p_basketProduct in basketProduct_type);
-  
-  function getBasketProductByCustomerId(p_customerId customer.customerid%type) 
+
+  function getBasketProductByCustomerId(p_customerId customer.customerid%type)
     return sys_refcursor;
-  
-  function getSelectedBasketProductByCustomerId(p_customerId customer.customerid%type) 
+
+  function getSelectedBasketProductByCustomerId(p_customerId customer.customerid%type)
     return sys_refcursor;
-  
-  function getSelectedBasketProductByBasketId(p_basketId basketProduct.basketid%type) 
+
+  function getSelectedBasketProductByBasketId(p_basketId basketProduct.basketid%type)
     return getBasketProductList_type;
-    
-  procedure deleteProductListFromBasket(p_list_basketProduct getBasketProductList_type); 
-  
+
+  procedure deleteProductListFromBasket(p_list_basketProduct getBasketProductList_type);
+
   procedure reverseSelectedStatusOfTheProductInBasket(p_basketId  basketproduct.basketid%type,
                                                       p_productId basketproduct.productid%type);
 
@@ -66,12 +65,6 @@ create or replace noneditionable package body basketProductManager_pkg is
   end;
 
   procedure addProductToBasket(p_basketProduct in basketProduct_type) is
-    cursor c_updateProductQuantity is
-      select bp.productquantity
-        from basketProduct bp
-       where bp.basketid = p_basketProduct.basketId
-         and bp.productid = p_basketProduct.productId
-         for update;
   
     v_currentProductQuantity        basketProduct.Productquantity%type;
     v_productExists                 boolean;
@@ -92,17 +85,20 @@ create or replace noneditionable package body basketProductManager_pkg is
       ecpValidate_pkg.basketProductParameters(p_productQuantity => (v_currentProductQuantity +
                                                                    nvl(p_basketProduct.productQuantity,
                                                                         1)));
-      open c_updateProductQuantity;
-      fetch c_updateProductQuantity
-        into v_currentProductQuantity;
+      -- Guncellenecek satir kitlenir
+      select bp.productquantity
+        into v_currentProductQuantity
+        from basketProduct bp
+       where bp.basketid = p_basketProduct.basketId
+         and bp.productid = p_basketProduct.productId
+         for update;
     
       -- Urun adedi guncellenir.  
       update basketproduct bp
          set bp.productquantity = v_currentProductQuantity +
                                   nvl(p_basketProduct.productQuantity, 1)
-       where current of c_updateProductQuantity;
-    
-      close c_updateProductQuantity;
+       where bp.basketid = p_basketProduct.basketId
+         and bp.productid = p_basketProduct.productId;
     
       -- Guncellenecek urun sepette bulunamazsa hata verir.
       if sql%notfound then
@@ -136,7 +132,6 @@ create or replace noneditionable package body basketProductManager_pkg is
       rollback;
       ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_PRODUCT_NOT_FOUND_IN_BASKET_FOR_UPDATE);
     when others then
-      close c_updateProductQuantity;
       rollback;
       ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_OTHERS);
     
@@ -262,7 +257,7 @@ create or replace noneditionable package body basketProductManager_pkg is
   begin
     -- Parametre kontrolu yapilir.
     ecpValidate_pkg.customerParameters(p_customerId => p_customerId);
-    
+  
     -- Frontend'e kullanicinin sepetteki urunlerini gonderir
     open c_basketProduct for
       select bp.basketid basketId,
@@ -295,7 +290,7 @@ create or replace noneditionable package body basketProductManager_pkg is
   begin
     -- Parametre kontrolu yapilir.
     ecpValidate_pkg.customerParameters(p_customerId => p_customerId);
-    
+  
     -- Frontend'e kullanicinin siparis ekranindaki urunlerini gonderir
     open c_selectedBasketProduct for
       select bp.basketid basketId,
@@ -397,12 +392,7 @@ create or replace noneditionable package body basketProductManager_pkg is
 
   procedure reverseSelectedStatusOfTheProductInBasket(p_basketId  basketproduct.basketid%type,
                                                       p_productId basketproduct.productid%type) is
-    cursor c_selectedStatus is
-      select bp.isselected
-        from basketproduct bp
-       where bp.basketid = p_basketId
-         and bp.productid = p_productId
-         for update;
+  
     v_selectedStatus                basketproduct.isselected%type;
     err_product_not_found_in_basket exception;
   begin
@@ -410,15 +400,20 @@ create or replace noneditionable package body basketProductManager_pkg is
     ecpValidate_pkg.basketParameters(p_basketId => p_basketId);
     ecpValidate_pkg.productParameters(p_productId => p_productId);
   
-    open c_selectedStatus;
-    fetch c_selectedStatus
-      into v_selectedStatus;
+    -- Guncellenek satir kilitlenir.
+    select bp.isselected
+      into v_selectedStatus
+      from basketproduct bp
+     where bp.basketid = p_basketId
+       and bp.productid = p_productId
+       for update;
   
     -- Urunun sepetteki durumu secili deðilse ise secilmise cevirir.
     if v_selectedStatus = 0 then
       update basketproduct bp
          set bp.isselected = 1
-       where current of c_selectedStatus;
+       where bp.basketid = p_basketId
+         and bp.productid = p_productId;
       -- Guncellenecek urun sepette bulunamazsa hata verir.
       if sql%notfound then
         raise err_product_not_found_in_basket;
@@ -428,14 +423,14 @@ create or replace noneditionable package body basketProductManager_pkg is
     else
       update basketproduct bp
          set bp.isselected = 0
-       where current of c_selectedStatus;
+       where bp.basketid = p_basketId
+         and bp.productid = p_productId;
+    
       -- Guncellenecek urun sepette bulunamazsa hata verir.
       if sql%notfound then
         raise err_product_not_found_in_basket;
       end if;
     end if;
-  
-    close c_selectedStatus;
   
     commit;
   

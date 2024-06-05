@@ -5,9 +5,9 @@ create or replace noneditionable package customerManager_pkg is
                      p_password  customer.passwordhash%type,
                      p_emailId   customer.emailid%type);
 
-  function getCustomerIdByEmailId(p_emailId customer.emailid%type) 
+  function getCustomerIdByEmailId(p_emailId customer.emailid%type)
     return customer.customerid%type;
-  
+
   function isPasswordSaltExists(p_passwordSalt in customer.passwordsalt%type)
     return boolean;
 
@@ -73,8 +73,8 @@ create or replace noneditionable package body customerManager_pkg is
     basketManager_pkg.addBasket(p_customerId => v_customerId);
   
     -- Musteriye ait bir oturum durumu olusturur.
-    customerSessionManager_pkg.addCustomerSession(p_customerId => v_customerId); 
-    
+    customerSessionManager_pkg.addCustomerSession(p_customerId => v_customerId);
+  
     -- Musteri eklenmezse hata uretir
   exception
     when dup_val_on_index then
@@ -90,23 +90,23 @@ create or replace noneditionable package body customerManager_pkg is
     return customer.customerid%type is
     v_customerId customer.customerid%type;
   begin
-    
-  -- EmailId'ye gore aktif hesabin customerId'sini getirir.
+  
+    -- EmailId'ye gore aktif hesabin customerId'sini getirir.
     select c.customerid
       into v_customerId
       from customer c
      where c.emailid = p_emailId
        and c.isaccountactive = 1;
-   
-   return v_customerId;  
-   exception
+  
+    return v_customerId;
+  exception
     when no_data_found then
       ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_CUSTOMER_ID_NOT_FOUND);
     when too_many_rows then
       ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_CUSTOMER_ID_TOO_MANY_ROWS);
     when others then
       ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_OTHERS);
-
+    
   end;
 
   function isPasswordSaltExists(p_passwordSalt in customer.passwordsalt%type)
@@ -181,14 +181,11 @@ create or replace noneditionable package body customerManager_pkg is
 
   procedure changePassword(p_emailId     email.emailid%type,
                            p_newPassword customer.passwordhash%type) is
-    cursor c_changePasswordCustomer is
-      select c.passwordhash, c.passwordsalt
-        from customer c
-       where c.emailid = p_emailId
-         for update;
-    v_changePasswordCustomer c_changePasswordCustomer%rowtype;
-    v_newPasswordHash        customer.passwordhash%type;
-    v_newPasswordSalt        customer.passwordsalt%type;
+                           
+    v_currentPasswordHash            customer.passwordhash%type;
+    v_currentPasswordSalt            customer.passwordsalt%type;  
+    v_newPasswordHash                customer.passwordhash%type;
+    v_newPasswordSalt                customer.passwordsalt%type;
     err_customer_password_for_update exception;
   begin
     v_newPasswordSalt := passwordsecurity_pkg.generateSalt();
@@ -200,21 +197,24 @@ create or replace noneditionable package body customerManager_pkg is
     ecpValidate_pkg.customerParameters(p_passwordHash => v_newPasswordHash,
                                        p_passwordSalt => v_newPasswordSalt);
   
-    -- Sifre degisikligi icin cursor acilir ve yeni salt ve hash parolalar update edilir.
-    open c_changePasswordCustomer;
-    fetch c_changePasswordCustomer
-      into v_changePasswordCustomer;
+    -- Guncellenecek satir kilitlenir.
+    select c.passwordhash, c.passwordsalt
+      into v_currentPasswordHash, v_currentPasswordSalt 
+      from customer c
+     where c.emailid = p_emailId
+       for update;
+  
+    -- Yeni salt ve hash parolalar update edilir.  
     update customer c
        set c.passwordhash = v_newPasswordHash,
            c.passwordsalt = v_newPasswordSalt
-     where current of c_changePasswordCustomer;
-    close c_changePasswordCustomer;
+     where c.emailid = p_emailId;
   
     -- Musteri sifresi degismezse hata uretir.
     if sql%notfound then
-      raise err_customer_password_for_update;      
-    end if; 
-   
+      raise err_customer_password_for_update;
+    end if;
+  
     -- Uygun musteri bulunamazsa hata verir.
     -- Benzersiz password salt uretilmezse hata verir.
   exception
@@ -222,15 +222,12 @@ create or replace noneditionable package body customerManager_pkg is
       rollback;
       ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_CUSTOMER_PASSWORD_FOR_UPDATE);
     when no_data_found then
-      close c_changePasswordCustomer;
       rollback;
       ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_CUSTOMER_NOT_FOUND);
     when dup_val_on_index then
-      close c_changePasswordCustomer;
       rollback;
       ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_CUSTOMER_DUPLICATE);
     when others then
-      close c_changePasswordCustomer;
       rollback;
       ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_OTHERS);
     
