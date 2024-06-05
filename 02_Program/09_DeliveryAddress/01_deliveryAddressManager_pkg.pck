@@ -7,11 +7,15 @@ end deliveryAddressManager_pkg;
 /
 create or replace noneditionable package body deliveryAddressManager_pkg is
 
- function getDeliveryAddressDetailByCustomerId(p_customerId customer.customerid%type) 
-    return sys_refcursor is 
-    c_deliveryAddress sys_refcursor;   
-    begin
-       open c_deliveryAddress for
+  function getDeliveryAddressDetailByCustomerId(p_customerId customer.customerid%type)
+    return sys_refcursor is
+    c_deliveryAddress sys_refcursor;
+  begin
+    -- Parametre kontrolu yapilir.
+    ecpValidate_pkg.customerParameters(p_customerId => p_customerId);
+  
+    -- Frontend'e musteriye ait teslimat adreslerini gonderir.
+    open c_deliveryAddress for
       select (c.firstname || ' ' || c.lastname) fullName,
              (a.addressdesciption || ' ' || d.districtname || ' / ' ||
              city.cityname || ' / ' || country.countryname) deliveryAddressDetail,
@@ -31,8 +35,17 @@ create or replace noneditionable package body deliveryAddressManager_pkg is
          and city.countryid = country.countryid
          and da.phoneid = p.phoneid
          and c.customerid = p_customerId;
+  
     return c_deliveryAddress;
-    end;
+  
+  exception
+    when others then
+      if c_deliveryAddress%isopen then
+        close c_deliveryAddress;
+      end if;
+      ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_OTHERS);
     
+  end;
+
 end deliveryAddressManager_pkg;
 /

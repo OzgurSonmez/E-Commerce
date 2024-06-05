@@ -1,8 +1,8 @@
 create or replace noneditionable package basketProductManager_pkg is
 
-  function getProductCountInBasket(p_basketId  basketproduct.basketid%type,
+  function isProductExistsInBasket(p_basketId  basketproduct.basketid%type,
                                    p_productId basketproduct.productid%type)
-    return pls_integer;
+    return boolean;
 
   procedure addProductToBasket(p_basketProduct in basketProduct_type);
 
@@ -34,24 +34,35 @@ end basketProductManager_pkg;
 /
 create or replace noneditionable package body basketProductManager_pkg is
 
-  function getProductCountInBasket(p_basketId  basketproduct.basketid%type,
+  function isProductExistsInBasket(p_basketId  basketproduct.basketid%type,
                                    p_productId basketproduct.productid%type)
-    return pls_integer is
-    v_productCount pls_integer;
+    return boolean is
+    v_productExist pls_integer;
   begin
     -- Parametre kontrolu yapilir.
     ecpValidate_pkg.basketParameters(p_basketId => p_basketId);
     ecpValidate_pkg.productParameters(p_productId => p_productId);
   
     -- Musterinin sepetinde parametreden gelen urunun varligini kontrol eder.
-    select count(*)
-      into v_productCount
-      from basketproduct bp
-     where bp.basketid = p_basketId
-       and bp.productid = p_productId;
+    -- Sonucu 1 veya 0 olarak doner.
+    select case
+             when exists (select 1
+                     from basketproduct bp
+                    where bp.basketid = p_basketId
+                      and bp.productid = p_productId) then
+              1
+             else
+              0
+           end
+      into v_productExist
+      from dual;
   
-    -- Urun satir sayisini doner.
-    return v_productCount;
+    if v_productExist = 1 then
+      return true;
+    else
+      return false;
+    end if;
+  
   end;
 
   procedure addProductToBasket(p_basketProduct in basketProduct_type) is
@@ -63,7 +74,7 @@ create or replace noneditionable package body basketProductManager_pkg is
          for update;
   
     v_currentProductQuantity        basketProduct.Productquantity%type;
-    v_productCount                  pls_integer;
+    v_productExists                 boolean;
     v_basketProductId               basketProduct.basketproductid%type;
     v_isSelected                    basketProduct.Isselected%type := 1;
     err_product_not_found_in_basket exception;
@@ -72,11 +83,11 @@ create or replace noneditionable package body basketProductManager_pkg is
     ecpValidate_pkg.basketParameters(p_basketId => p_basketProduct.basketId);
     ecpValidate_pkg.productParameters(p_productId => p_basketProduct.productId);
   
-    v_productCount := getProductCountInBasket(p_basketId  => p_basketProduct.basketId,
-                                              p_productId => p_basketProduct.productId);
+    v_productExists := isProductExistsInBasket(p_basketId  => p_basketProduct.basketId,
+                                               p_productId => p_basketProduct.productId);
   
     -- Sepette daha once belirtilen urun varsa urun adedine ekleme yapar.
-    if v_productCount > 0 then
+    if v_productExists then
       -- Parametre kontrolu yapilir.
       ecpValidate_pkg.basketProductParameters(p_productQuantity => (v_currentProductQuantity +
                                                                    nvl(p_basketProduct.productQuantity,
@@ -249,14 +260,18 @@ create or replace noneditionable package body basketProductManager_pkg is
     return sys_refcursor is
     c_basketProduct sys_refcursor;
   begin
+    -- Parametre kontrolu yapilir.
+    ecpValidate_pkg.customerParameters(p_customerId => p_customerId);
+    
+    -- Frontend'e kullanicinin sepetteki urunlerini gonderir
     open c_basketProduct for
-      select bp.basketid        basketId,
-             br.brandname       brandName,
-             p.productid        productId,
-             p.productname      productName,
-             (p.price * (100 - p.discountpercentage) / 100)            productPrice,
+      select bp.basketid basketId,
+             br.brandname brandName,
+             p.productid productId,
+             p.productname productName,
+             (p.price * (100 - p.discountpercentage) / 100) productPrice,
              bp.productquantity productQuantity,
-             bp.isselected      productIsSelected
+             bp.isselected productIsSelected
         from basketproduct bp, basket b, product p, brand br
        where bp.basketid = b.basketid
          and bp.productid = p.productid
@@ -264,18 +279,30 @@ create or replace noneditionable package body basketProductManager_pkg is
          and b.customerid = p_customerId;
   
     return c_basketProduct;
+  
+  exception
+    when others then
+      if c_basketProduct%isopen then
+        close c_basketProduct;
+      end if;
+      ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_OTHERS);
+    
   end;
 
   function getSelectedBasketProductByCustomerId(p_customerId customer.customerid%type)
     return sys_refcursor is
-    c_basketProduct sys_refcursor;
+    c_selectedBasketProduct sys_refcursor;
   begin
-    open c_basketProduct for
-      select bp.basketid        basketId,
-             br.brandname       brandName,
-             p.productid        productId,
-             p.productname      productName,
-             (p.price * (100 - p.discountpercentage) / 100)   productPrice,
+    -- Parametre kontrolu yapilir.
+    ecpValidate_pkg.customerParameters(p_customerId => p_customerId);
+    
+    -- Frontend'e kullanicinin siparis ekranindaki urunlerini gonderir
+    open c_selectedBasketProduct for
+      select bp.basketid basketId,
+             br.brandname brandName,
+             p.productid productId,
+             p.productname productName,
+             (p.price * (100 - p.discountpercentage) / 100) productPrice,
              bp.productquantity productQuantity
         from basketproduct bp, basket b, product p, brand br
        where bp.basketid = b.basketid
@@ -284,9 +311,16 @@ create or replace noneditionable package body basketProductManager_pkg is
          and b.customerid = p_customerId
          and bp.isselected = 1;
   
-    return c_basketProduct;
-  end;
+    return c_selectedBasketProduct;
   
+  exception
+    when others then
+      if c_selectedBasketProduct%isopen then
+        close c_selectedBasketProduct;
+      end if;
+      ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_OTHERS);
+  end;
+
   function getSelectedBasketProductByBasketId(p_basketId basketProduct.basketid%type)
     return getBasketProductList_type is
   

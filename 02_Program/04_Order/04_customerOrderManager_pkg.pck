@@ -159,6 +159,10 @@ create or replace noneditionable package body customerOrderManager_pkg is
   
     c_customerOrder sys_refcursor;
   begin
+    -- Parametre kontrolu yapilir.
+    ecpValidate_pkg.customerParameters(p_customerId => p_customerId);
+  
+    --Frontend'e musteri siparislerini gonderir.
     open c_customerOrder for
       select co.customerorderid customerOrderId,
              co.orderno orderNo,
@@ -188,7 +192,16 @@ create or replace noneditionable package body customerOrderManager_pkg is
          and da.phoneid = p.phoneid
          and co.customerid = p_customerId
        order by orderDate desc;
+  
     return c_customerOrder;
+  
+  exception
+    when others then
+      if c_customerOrder%isopen then
+        close c_customerOrder;
+      end if;
+      ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_OTHERS);
+    
   end;
 
 end customerOrderManager_pkg;

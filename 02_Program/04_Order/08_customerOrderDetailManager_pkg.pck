@@ -127,6 +127,10 @@ create or replace noneditionable package body customerOrderDetailManager_pkg is
     return sys_refcursor is
     c_customerOrderDetail sys_refcursor;
   begin
+    -- Parametre kontrolu yapilir.
+    ecpValidate_pkg.customerOrderParameters(p_customerOrderId => p_customerOrderId);
+    
+    -- Frontend'e musteri siparisinin detaylarini gonderir.
     open c_customerOrderDetail for
       select b.brandname   brandName,
              p.productname productName,
@@ -136,7 +140,16 @@ create or replace noneditionable package body customerOrderDetailManager_pkg is
        where cod.productid = p.productid
          and p.brandid = b.brandid
          and cod.customerorderid = p_customerOrderId;
+         
     return c_customerOrderDetail;
+  
+  exception
+    when others then
+      if c_customerOrderDetail%isopen then
+        close c_customerOrderDetail;
+      end if;
+      ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_OTHERS);
+    
   end;
 
 end customerOrderDetailManager_pkg;

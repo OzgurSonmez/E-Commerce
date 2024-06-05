@@ -133,9 +133,13 @@ create or replace noneditionable package body customerProductFavoriteManager_pkg
     return sys_refcursor is
     c_customerProductFavorite sys_refcursor;
   begin
+    -- Parametre kontrolu yapilir.
+    ecpValidate_pkg.customerParameters(p_customerId => p_customerId);
+  
+    -- Frontend'e musterinin favoriye aldigi urunleri gonderir
     open c_customerProductFavorite for
-      select b.brandname brandName,
-             p.productid productId,
+      select b.brandname   brandName,
+             p.productid   productId,
              p.productname productName,
              p.price       productPrice
         from customerproductfavorite cpf, product p, brand b
@@ -143,8 +147,15 @@ create or replace noneditionable package body customerProductFavoriteManager_pkg
          and p.brandid = b.brandid
          and cpf.isfavorite = 1
          and cpf.customerid = p_customerId;
-      
-       return c_customerProductFavorite;
+  
+    return c_customerProductFavorite;
+  
+  exception
+    when others then
+      if c_customerProductFavorite%isopen then
+        close c_customerProductFavorite;
+      end if;
+      ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_OTHERS);
   end;
 
 end customerProductFavoriteManager_pkg;
