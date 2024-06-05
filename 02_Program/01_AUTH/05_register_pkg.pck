@@ -7,7 +7,7 @@ end register_pkg;
 create or replace noneditionable package body register_pkg is
 
   procedure customerRegister(p_customerRegister in register_type) is
-     v_emailId email.emailid%type; 
+     v_emailId email.emailid%type;
   begin
     -- Email adresini ekler.
     emailManager_pkg.addEmail(p_customerRegister.emailAddress);
@@ -23,9 +23,9 @@ create or replace noneditionable package body register_pkg is
     commit;
     
     exception
-    when others then
+     when others then
       rollback;
-      ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_REGISTER);                             
+      ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_REGISTER);                                   
   end;
 end register_pkg;
 /

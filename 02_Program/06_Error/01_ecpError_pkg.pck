@@ -171,7 +171,7 @@ create or replace noneditionable package ecpError_pkg is
   ERR_MSG_PRODUCT_FAVORITE_COUNT_INVALID CONSTANT VARCHAR2(100) := 'Gecersiz favori sayisi.';
   -- Brand
   ERR_MSG_BRAND_ID_INVALID CONSTANT VARCHAR2(100) := 'Gecersiz Marka Id.';
-  ERR_MSG_BRAND_NAME_TOO_LONG CONSTANT VARCHAR2(100) := 'Urun ismi cok uzun.';
+  ERR_MSG_BRAND_NAME_TOO_LONG CONSTANT VARCHAR2(100) := 'Marka ismi cok uzun.';
   -- Category
   ERR_MSG_CATEGORY_ID_INVALID CONSTANT VARCHAR2(100) := 'Gecersiz Kategori Id.';
   ERR_MSG_CATEGORY_NAME_TOO_LONG CONSTANT VARCHAR2(100) := 'Kategori ismi cok uzun.';

@@ -29,9 +29,9 @@ create or replace noneditionable package body emailManager_pkg is
     -- Daha once eklenen bir email adresi tekrar eklenmek istendiginde duplicate hatasi alinir.
     exception
       when dup_val_on_index then
-           ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_EMAIL_ADDRESS_DUPLICATE);
+          ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_EMAIL_ADDRESS_DUPLICATE);
       when others then
-           ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_EMAIL_ADDRESS_INSERT);
+          ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_EMAIL_ADDRESS_INSERT);
   end;
   
   function getEmailIdByEmailAddress(p_emailAddress email.emailaddress%type)

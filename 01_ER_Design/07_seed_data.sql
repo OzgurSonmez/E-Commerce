@@ -14,9 +14,13 @@ insert into gender(genderid,gendername)
 
 -- Phone
 insert into phone(phoneid,phonenumber)
-       values(1,557-557-57-57);
+       values(1,5575575757);
 
+insert into phone(phoneid,phonenumber)
+       values(2,5500001010);
 
+insert into phone(phoneid,phonenumber)
+       values(3,5444444444);
 ---------------------------------------------------------
 
 -- Country
@@ -49,6 +53,11 @@ insert into district(districtid,cityid,districtname)
 insert into address(addressid,districtid,addressdesciption)
        values(1,1,'Esenyalı Mh. Vatan Cd. No:1 D:1');
 
+insert into address(addressid,districtid,addressdesciption)
+       values(2,2,'Hasanpaşa Mh. Bayrak Cd. No:2 D:3');
+       
+insert into address(addressid,districtid,addressdesciption)
+       values(3,3,'Yıldız Mh. Çırağan Cd. No:77 D:5');
 ----------------------------------------------------------
 -- Tax
 insert into tax(taxid,taxname,taxpercentage)
@@ -75,6 +84,8 @@ insert into orderstatustype(orderstatustypeid,typename)
        
        
 commit;
+
+
 
 
 

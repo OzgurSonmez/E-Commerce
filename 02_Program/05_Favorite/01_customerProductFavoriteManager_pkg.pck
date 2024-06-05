@@ -1,13 +1,14 @@
 create or replace noneditionable package customerProductFavoriteManager_pkg is
 
-   procedure addProductToFavorite(p_customerId customer.customerid%type,
-                                  p_productId product.productid%type);    
-       
-   
-   procedure removeProductFromFavorite(p_customerId customer.customerid%type,
-                                       p_productId product.productid%type);                                
-   
-                                  
+  procedure addProductToFavorite(p_customerId customer.customerid%type,
+                                 p_productId  product.productid%type);
+
+  procedure removeProductFromFavorite(p_customerId customer.customerid%type,
+                                      p_productId  product.productid%type);
+
+  function getCustomerProductFavorite(p_customerId customer.customerid%type)
+    return sys_refcursor;
+
 end customerProductFavoriteManager_pkg;
 /
 create or replace noneditionable package body customerProductFavoriteManager_pkg is
@@ -126,6 +127,24 @@ create or replace noneditionable package body customerProductFavoriteManager_pkg
       close c_customerProductFavorite;
       rollback;
       ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_OTHERS);
+  end;
+
+  function getCustomerProductFavorite(p_customerId customer.customerid%type)
+    return sys_refcursor is
+    c_customerProductFavorite sys_refcursor;
+  begin
+    open c_customerProductFavorite for
+      select b.brandname brandName,
+             p.productid productId,
+             p.productname productName,
+             p.price       productPrice
+        from customerproductfavorite cpf, product p, brand b
+       where cpf.productid = p.productid
+         and p.brandid = b.brandid
+         and cpf.isfavorite = 1
+         and cpf.customerid = p_customerId;
+      
+       return c_customerProductFavorite;
   end;
 
 end customerProductFavoriteManager_pkg;

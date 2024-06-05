@@ -8,7 +8,8 @@ create or replace noneditionable package customerOrderDetailManager_pkg is
   
   function getTotalPrice(p_customerOrderId customerorderdetail.customerorderid%type) return customerorder.totalprice%type; 
   
-  
+  function getCustomerOrderDetailByCustomerOrderId(p_customerOrderId customerorder.customerorderid%type) 
+           return sys_refcursor;
 
 end customerOrderDetailManager_pkg;
 /
@@ -61,10 +62,10 @@ create or replace noneditionable package body customerOrderDetailManager_pkg is
       ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_OTHERS);
     
   end;
-  
+
   function getOrderDetailList(p_customerOrderId customerorder.customerorderid%type)
-           return getCustomerOrderDetailList_type is
-    
+    return getCustomerOrderDetailList_type is
+  
     -- Musteriye ait siparislerin icerisindeki urunleri getirir.
     cursor c_customerOrderDetail(cp_customerOrderId customerorderdetail.customerorderid%type) is
       select b.brandname   brandName,
@@ -74,30 +75,30 @@ create or replace noneditionable package body customerOrderDetailManager_pkg is
         from customerorderdetail cod, product p, brand b
        where cod.productid = p.productid
          and p.brandid = b.brandid
-         and cod.customerorderid = cp_customerOrderId;   
-  v_customerOrderDetailList getCustomerOrderDetailList_type := getCustomerOrderDetailList_type();
-  v_index pls_integer := 0;
+         and cod.customerorderid = cp_customerOrderId;
+    v_customerOrderDetailList getCustomerOrderDetailList_type := getCustomerOrderDetailList_type();
+    v_index                   pls_integer := 0;
   begin
     -- Parametre kontrolu yapilir.
     ecpValidate_pkg.customerOrderParameters(p_customerOrderId => p_customerOrderId);
     for r_customerOrderDetail in c_customerOrderDetail(p_customerOrderId) loop
-        -- Siparise ait urun listesi
-        v_customerOrderDetailList.extend;
-        v_index := v_index + 1;
-      
-        v_customerOrderDetailList(v_index) := getCustomerOrderDetail_type(brandName => r_customerOrderDetail.Brandname,
-                                                                          productName      => r_customerOrderDetail.Productname,
-                                                                          productQuantity  => r_customerOrderDetail.Productquantity,
-                                                                          productUnitPrice => r_customerOrderDetail.Productunitprice);
-      
-      end loop;
+      -- Siparise ait urun listesi
+      v_customerOrderDetailList.extend;
+      v_index := v_index + 1;
+    
+      v_customerOrderDetailList(v_index) := getCustomerOrderDetail_type(brandName        => r_customerOrderDetail.Brandname,
+                                                                        productName      => r_customerOrderDetail.Productname,
+                                                                        productQuantity  => r_customerOrderDetail.Productquantity,
+                                                                        productUnitPrice => r_customerOrderDetail.Productunitprice);
+    
+    end loop;
     -- Siparise ait urun listesini doner.
     return v_customerOrderDetailList;
-    
-    exception
-      when others then
-        rollback;
-        ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_OTHERS);
+  
+  exception
+    when others then
+      rollback;
+      ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_OTHERS);
   end;
 
   function getTotalPrice(p_customerOrderId customerorderdetail.customerorderid%type)
@@ -120,6 +121,22 @@ create or replace noneditionable package body customerOrderDetailManager_pkg is
     when others then
       ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_OTHERS);
     
+  end;
+
+  function getCustomerOrderDetailByCustomerOrderId(p_customerOrderId customerorder.customerorderid%type)
+    return sys_refcursor is
+    c_customerOrderDetail sys_refcursor;
+  begin
+    open c_customerOrderDetail for
+      select b.brandname   brandName,
+             p.productname productName,
+             cod.quantity  productQuantity,
+             cod.unitprice productUnitPrice
+        from customerorderdetail cod, product p, brand b
+       where cod.productid = p.productid
+         and p.brandid = b.brandid
+         and cod.customerorderid = p_customerOrderId;
+    return c_customerOrderDetail;
   end;
 
 end customerOrderDetailManager_pkg;

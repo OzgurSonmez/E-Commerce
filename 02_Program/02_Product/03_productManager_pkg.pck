@@ -4,7 +4,7 @@ create or replace noneditionable package productManager_pkg is
 
   procedure deleteProduct(p_productId product.productid%type);
 
-  procedure filterProduct(p_filterProduct in filterProduct_type);
+  function filterProduct(p_filterProduct in filterProduct_type) return sys_refcursor;
   
   procedure increaseProductFavoriteCount(p_productId product.productid%type);
   
@@ -86,7 +86,8 @@ create or replace noneditionable package body productManager_pkg is
       ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_OTHERS);
   end;
 
-  procedure filterProduct(p_filterProduct in filterProduct_type) is
+  function filterProduct(p_filterProduct in filterProduct_type)
+    return sys_refcursor is
     v_query  varchar2(3000);
     v_cursor sys_refcursor;
   
@@ -122,10 +123,13 @@ create or replace noneditionable package body productManager_pkg is
                      from category ct, recursivecategory rc
                         where ct.parentcategoryid = rc.categoryid
                  )
-                  select rc.categoryName          categoryName,
-                         b.brandname              brandName,
+                  select rc.categoryId            categoryId,
+                         rc.categoryName          categoryName,                         
+                         b.brandId                brandId,
+                         b.brandname              brandName,                         
+                         p.productId              productId,
                          p.productname            productName,
-                         p.price                  price,
+                        (p.price * (100 - p.discountpercentage) / 100)  price,
                          p.discountpercentage     discount,
                          p.favcount               favcount
                       from product p, productcategory pc, recursiveCategory rc, brand b
@@ -173,23 +177,23 @@ create or replace noneditionable package body productManager_pkg is
             p_filterProduct.maxPrice;
   
     -- Cursor'daki sonuclar islenir.
-    loop
-      fetch v_cursor
-        into v_rec_product;
-      exit when v_cursor%notfound;
+   -- loop
+   --   fetch v_cursor
+   --     into v_rec_product;
+   --   exit when v_cursor%notfound;
     
-      v_counter := v_counter + 1;
-      dbms_output.put_line(v_counter || '-> ' ||
-                           v_rec_product.categoryName || ' ' ||
-                           v_rec_product.brandName || ' ' ||
-                           v_rec_product.productName || ' ' ||
-                           v_rec_product.price || ' ' ||
-                           v_rec_product.discount || ' ' ||
-                           v_rec_product.favcount);
-    end loop;
+   --   v_counter := v_counter + 1;
+   --   dbms_output.put_line(v_counter || '-> ' ||
+   --                        v_rec_product.categoryName || ' ' ||
+   --                        v_rec_product.brandName || ' ' ||
+   --                        v_rec_product.productName || ' ' ||
+   --                        v_rec_product.price || ' ' ||
+   --                        v_rec_product.discount || ' ' ||
+   --                        v_rec_product.favcount);
+   -- end loop;
   
-    close v_cursor;
-  
+   -- close v_cursor;
+    return v_cursor;
   exception
     when others then
       if v_cursor%isopen then

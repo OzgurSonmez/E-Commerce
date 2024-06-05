@@ -76,8 +76,7 @@ create or replace noneditionable package body ecpValidate_pkg is
       
       elsif not
              regexp_like(p_emailAddress,
-                         '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$') then
-        dbms_output.put_line('email kontrol edildi');
+                         '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$') then        
         raise err_email_address_invalid;
       end if;
     end if;
@@ -87,7 +86,7 @@ create or replace noneditionable package body ecpValidate_pkg is
       ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_EMAIL_ID_INVALID);
     when err_email_address_too_long then
       ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_EMAIL_ADDRESS_TOO_LONG);
-    when err_email_address_invalid then
+    when err_email_address_invalid then     
       ecpError_pkg.raiseError(p_ecpErrorCode => ecpError_pkg.ERR_CODE_EMAIL_ADDRESS_INVALID);
     when others then
       rollback;

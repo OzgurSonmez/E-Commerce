@@ -1,4 +1,4 @@
-create or replace package authManagement_pkg is
+create or replace noneditionable package authManagement_pkg is
 
   procedure register(p_register in register_type);
 
@@ -8,7 +8,7 @@ create or replace package authManagement_pkg is
 
 end authManagement_pkg;
 /
-create or replace package body authManagement_pkg is
+create or replace noneditionable package body authManagement_pkg is
 
   procedure register(p_register in register_type) is
   begin
